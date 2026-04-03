@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
+import { index as cliente } from '@/routes/cliente/index';
 
 export default function Clientes(props: { clientes: any[] }) {
     return (
@@ -25,7 +26,7 @@ Clientes.layout = (props: { currentTeam?: { slug: string } | null }) => ({
     breadcrumbs: [
         {
             title: 'Clientes',
-            // href: props.currentTeam ? cliente.index(props.currentTeam.slug) : '/',
+            href: props.currentTeam ? cliente(props.currentTeam.slug) : '/',
         },
     ],
 });
