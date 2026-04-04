@@ -15,6 +15,9 @@ Route::prefix('{current_team}')
     ->group(function () {
         Route::inertia('dashboard', 'dashboard')->name('dashboard');
         Route::get('clientes', [ClienteController::class, 'index'])->name('cliente.index');
+        Route::inertia('planos', 'planos')->name('planos');
+        Route::inertia('agenda', 'agenda')->name('agenda');
+        Route::inertia('relatorios', 'relatorios')->name('relatorios');
     });
 
 Route::middleware(['auth'])->group(function () {

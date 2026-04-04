@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid, Users } from 'lucide-react';
+import { BookOpen, FolderGit2, LayoutGrid, Users, UtensilsCrossed, Calendar, FileText } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -15,7 +15,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
-import { index as cliente } from '@/routes/cliente/index';
+import { planos, agenda, relatorios } from '@/routes';
 import type { NavItem } from '@/types';
 
 export function AppSidebar() {
@@ -25,8 +25,20 @@ export function AppSidebar() {
         ? dashboard(page.props.currentTeam.slug)
         : '/';
 
-    const clientesUrl = page.props.currentTeam
-        ? cliente(page.props.currentTeam.slug)
+    const PacientesUrl = page.props.currentTeam
+        ? dashboard(page.props.currentTeam.slug)
+        : '/';
+        
+    const planosUrl = page.props.currentTeam
+        ? planos(page.props.currentTeam.slug)
+        : '/';
+
+    const agendaUrl = page.props.currentTeam
+        ? agenda(page.props.currentTeam.slug)
+        : '/';
+
+    const relatoriosUrl = page.props.currentTeam
+        ? relatorios(page.props.currentTeam.slug)
         : '/';
     
     const mainNavItems: NavItem[] = [
@@ -36,14 +48,29 @@ export function AppSidebar() {
             icon: LayoutGrid,
         },
         {
-            title: 'Clientes',
-            href: clientesUrl,
+            title: 'Pacientes',
+            href: PacientesUrl,
             icon: Users,
+        },
+        {
+            title: 'Planos Alimentares',
+            href: planosUrl,
+            icon: UtensilsCrossed,
+        },
+        {
+            title: 'Agenda',
+            href: agendaUrl,
+            icon: Calendar,
+        },
+        {
+            title: 'Relatórios',
+            href: relatoriosUrl,
+            icon: FileText,
         },
     ];
 
     const footerNavItems: NavItem[] = [
-        {
+    /*     {
             title: 'Repository',
             href: 'https://github.com/laravel/react-starter-kit',
             icon: FolderGit2,
@@ -52,7 +79,7 @@ export function AppSidebar() {
             title: 'Documentation',
             href: 'https://laravel.com/docs/starter-kits#react',
             icon: BookOpen,
-        },
+        }, */
     ];
 
     return (
