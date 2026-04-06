@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid, Users, UtensilsCrossed, Calendar, FileText } from 'lucide-react';
+import { LayoutGrid, Users, UtensilsCrossed, Calendar, FileText } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -14,8 +14,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
-import { planos, agenda, relatorios } from '@/routes';
+import { dashboard, planos, agenda, relatorios, pacientes } from '@/routes';
 import type { NavItem } from '@/types';
 
 export function AppSidebar() {
@@ -25,8 +24,8 @@ export function AppSidebar() {
         ? dashboard(page.props.currentTeam.slug)
         : '/';
 
-    const PacientesUrl = page.props.currentTeam
-        ? dashboard(page.props.currentTeam.slug)
+    const pacientesUrl = page.props.currentTeam
+        ? pacientes(page.props.currentTeam.slug)
         : '/';
         
     const planosUrl = page.props.currentTeam
@@ -49,7 +48,7 @@ export function AppSidebar() {
         },
         {
             title: 'Pacientes',
-            href: PacientesUrl,
+            href: pacientesUrl,
             icon: Users,
         },
         {
@@ -69,18 +68,7 @@ export function AppSidebar() {
         },
     ];
 
-    const footerNavItems: NavItem[] = [
-    /*     {
-            title: 'Repository',
-            href: 'https://github.com/laravel/react-starter-kit',
-            icon: FolderGit2,
-        },
-        {
-            title: 'Documentation',
-            href: 'https://laravel.com/docs/starter-kits#react',
-            icon: BookOpen,
-        }, */
-    ];
+    const footerNavItems: NavItem[] = [];
 
     return (
         <Sidebar collapsible="icon" variant="inset">

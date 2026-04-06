@@ -8,62 +8,83 @@ use Inertia\Inertia;
 
 class ClienteController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        $clientes = Cliente::all();
-        return Inertia::render('clientes/index', [
+        $query = Cliente::query();
+
+        if ($request->has('search')) {
+            $search = $request->get('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->has('status') && $request->get('status') !== 'all') {
+            $query->where('status', $request->get('status'));
+        }
+
+        $clientes = $query->orderBy('name')->get();
+
+        return Inertia::render('pacientes', [
             'clientes' => $clientes,
+            'filters' => [
+                'search' => $request->get('search', ''),
+                'status' => $request->get('status', 'all'),
+            ],
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'age' => 'nullable|integer|min:0|max:150',
+            'weight' => 'nullable|string|max:10',
+            'height' => 'nullable|string|max:10',
+            'plan' => 'nullable|string|max:100',
+            'status' => 'nullable|in:Ativo,Pendente,Inativo',
+            'last_visit' => 'nullable|date',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:50',
+            'zip' => 'nullable|string|max:20',
+        ]);
+
+        $cliente = Cliente::create($validated);
+
+        return redirect()->back()->with('success', 'Paciente criado com sucesso!');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Cliente $cliente)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Cliente $cliente)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Cliente $cliente)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:20',
+            'age' => 'nullable|integer|min:0|max:150',
+            'weight' => 'nullable|string|max:10',
+            'height' => 'nullable|string|max:10',
+            'plan' => 'nullable|string|max:100',
+            'status' => 'nullable|in:Ativo,Pendente,Inativo',
+            'last_visit' => 'nullable|date',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:50',
+            'zip' => 'nullable|string|max:20',
+        ]);
+
+        $cliente->update($validated);
+
+        return redirect()->back()->with('success', 'Paciente atualizado com sucesso!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Cliente $cliente)
     {
-        //
+        $cliente->delete();
+
+        return redirect()->back()->with('success', 'Paciente excluído com sucesso!');
     }
 }

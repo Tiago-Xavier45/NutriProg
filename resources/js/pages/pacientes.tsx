@@ -1,31 +1,58 @@
-import { Head } from '@inertiajs/react';
-import { pacientes } from '@/routes/cliente';
-import { pacientes as nutritionRoutes } from '@/routes/nutrition';
+import { Head, usePage } from '@inertiajs/react';
+import { Patients } from '@/components/nutrition';
+import { pacientes } from '@/routes';
+
+interface PageProps {
+    clientes: Array<{
+        id: number;
+        name: string;
+        email: string;
+        phone: string;
+        age: number | null;
+        weight: string | null;
+        height: string | null;
+        plan: string | null;
+        status: 'Ativo' | 'Pendente' | 'Inativo';
+        last_visit: string | null;
+    }>;
+    filters?: {
+        search: string;
+        status: string;
+    };
+}
 
 export default function PacientesPage() {
+    const { clientes, filters } = usePage<PageProps>().props;
+
     return (
         <>
             <Head title="Pacientes - NutriPro" />
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold text-gray-900">Pacientes</h1>
-                </div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-                    <p className="text-gray-500">Carregando pacientes...</p>
-                </div>
-            </div>
+            <Patients 
+                initialPatients={clientes.map(c => ({
+                    id: c.id,
+                    name: c.name,
+                    email: c.email || '',
+                    phone: c.phone || '',
+                    age: c.age || 0,
+                    weight: c.weight || '',
+                    height: c.height || '',
+                    plan: c.plan || '',
+                    status: c.status || 'Ativo',
+                    lastVisit: c.last_visit 
+                        ? new Date(c.last_visit).toLocaleDateString('pt-BR')
+                        : 'Nunca',
+                }))}
+                initialFilters={filters}
+            />
         </>
     );
 }
 
-PacientesPage.layout = (props: { currentTeam?: { slug: string } | null }) => {
-    const baseUrl = props.currentTeam ? `/${props.currentTeam.slug}` : '';
-    return {
-        breadcrumbs: [
-            {
-                title: 'Pacientes',
-                href: `${baseUrl}/pacientes`,
-            },
-        ],
-    };
-};
+PacientesPage.layout = (props: { currentTeam?: { slug: string } | null }) => ({
+    breadcrumbs: [
+        {
+            title: 'Pacientes',
+            href: props.currentTeam ? pacientes(props.currentTeam.slug) : '/',
+        },
+    ],
+});

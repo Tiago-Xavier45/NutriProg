@@ -1,87 +1,80 @@
-import { Users, UtensilsCrossed, Calendar, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { usePage } from '@inertiajs/react';
+import { Users, UtensilsCrossed, Calendar, TrendingUp } from 'lucide-react';
+import { PageHeader, StatCard, ContentCard } from '@/components/ui';
 
-const stats = [
-    {
-        name: 'Total de Pacientes',
-        value: '127',
-        change: '+12%',
-        changeType: 'positive',
-        icon: Users,
-        color: 'bg-blue-500',
-    },
-    {
-        name: 'Planos Ativos',
-        value: '89',
-        change: '+5%',
-        changeType: 'positive',
-        icon: UtensilsCrossed,
-        color: 'bg-emerald-500',
-    },
-    {
-        name: 'Consultas Hoje',
-        value: '8',
-        change: '-2%',
-        changeType: 'negative',
-        icon: Calendar,
-        color: 'bg-purple-500',
-    },
-    {
-        name: 'Receita Mensal',
-        value: 'R$ 12.450',
-        change: '+18%',
-        changeType: 'positive',
-        icon: TrendingUp,
-        color: 'bg-orange-500',
-    },
-];
+interface PageProps {
+    stats: Array<{
+        name: string;
+        value: string;
+        change: string;
+        changeType: 'positive' | 'negative' | 'neutral';
+        icon: string;
+        color: string;
+    }>;
+    recentPatients: Array<{
+        id: number;
+        name: string;
+        plan: string;
+        lastVisit: string;
+        status: string;
+    }>;
+}
 
-const recentPatients = [
-    { id: 1, name: 'Maria Silva', plan: 'Low Carb', lastVisit: '28/03/2024', status: 'Ativo' },
-    { id: 2, name: 'João Santos', plan: 'Mediterrânea', lastVisit: '27/03/2024', status: 'Ativo' },
-    { id: 3, name: 'Ana Costa', plan: 'Halal', lastVisit: '26/03/2024', status: 'Pendente' },
-    { id: 4, name: 'Pedro Oliveira', plan: 'Vegetariana', lastVisit: '25/03/2024', status: 'Ativo' },
-    { id: 5, name: 'Carla Mendes', plan: 'Low FODMAP', lastVisit: '24/03/2024', status: 'Ativo' },
-];
+const iconMap: Record<string, any> = {
+    Users,
+    UtensilsCrossed,
+    Calendar,
+    TrendingUp,
+};
+
+const colorMap: Record<string, 'blue' | 'emerald' | 'purple' | 'orange'> = {
+    'bg-blue-500': 'blue',
+    'bg-emerald-500': 'emerald',
+    'bg-purple-500': 'purple',
+    'bg-orange-500': 'orange',
+};
+
+const trendMap: Record<string, 'up' | 'down' | 'neutral'> = {
+    positive: 'up',
+    negative: 'down',
+    neutral: 'neutral',
+};
 
 export function Dashboard() {
+    const { stats, recentPatients } = usePage<PageProps>().props;
+
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-                <p className="text-gray-500">Visão geral do seu consultório</p>
-            </div>
+            <PageHeader
+                title="Dashboard"
+                description="Visão geral do seu consultório"
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {stats.map((stat) => {
-                    const Icon = stat.icon;
+                    const Icon = iconMap[stat.icon] || Users;
+                    const color = colorMap[stat.color] || 'emerald';
+                    const trend = trendMap[stat.changeType] || 'neutral';
+                    
                     return (
-                        <div key={stat.name} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                            <div className="flex items-center justify-between">
-                                <div className={`${stat.color} p-3 rounded-lg`}>
-                                    <Icon className="w-6 h-6 text-white" />
-                                </div>
-                                <div className={`flex items-center text-sm ${
-                                    stat.changeType === 'positive' ? 'text-emerald-600' : 'text-red-500'
-                                }`}>
-                                    {stat.changeType === 'positive' ? (
-                                        <ArrowUpRight className="w-4 h-4" />
-                                    ) : (
-                                        <ArrowDownRight className="w-4 h-4" />
-                                    )}
-                                    {stat.change}
-                                </div>
-                            </div>
-                            <p className="mt-4 text-3xl font-bold text-gray-900">{stat.value}</p>
-                            <p className="text-gray-500 text-sm">{stat.name}</p>
-                        </div>
+                        <StatCard
+                            key={stat.name}
+                            label={stat.name}
+                            value={stat.value}
+                            icon={Icon}
+                            color={color}
+                            trend={{
+                                value: stat.change,
+                                type: trend,
+                            }}
+                        />
                     );
                 })}
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100">
-                    <h2 className="text-lg font-semibold text-gray-900">Últimos Pacientes</h2>
-                </div>
+            <ContentCard
+                showHeader={{ title: 'Últimos Pacientes' }}
+            >
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-gray-50">
@@ -135,7 +128,7 @@ export function Dashboard() {
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </ContentCard>
         </div>
     );
 }

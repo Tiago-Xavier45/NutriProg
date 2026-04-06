@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, Copy, Calendar, Clock, UtensilsCrossed, X, Save, AlertCircle, Check } from 'lucide-react';
+import { usePage, router } from '@inertiajs/react';
+import { PageHeader, ContentCard } from '@/components/ui';
 
 interface Food {
     id: string;
@@ -30,8 +32,9 @@ interface MealPlan {
     updatedAt: string;
 }
 
-const STORAGE_KEY = 'nutripro_mealplans';
-const generateId = () => Math.random().toString(36).substring(2, 15);
+interface MealPlansProps {
+    initialPlans?: MealPlan[];
+}
 
 const OBJECTIVES = [
     'Perda de peso',
@@ -67,43 +70,10 @@ const MEAL_TIMES = [
     '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00',
 ];
 
-const mockInitialPlans: MealPlan[] = [
-    {
-        id: generateId(),
-        patientId: '1',
-        patientName: 'Maria Silva',
-        planName: 'Low Carb - Fase 1',
-        calories: 1800,
-        objective: 'Perda de peso',
-        restrictions: ['Lactose'],
-        status: 'ativo',
-        createdAt: '20/03/2024',
-        updatedAt: '28/03/2024',
-        notes: 'Evitar alimentos processados. Aumentar consumo de vegetais.',
-        meals: [
-            { id: generateId(), name: 'Café da Manhã', time: '07:00', foods: [{ id: generateId(), name: '2 ovos mexidos', portion: '2 unidades', calories: 140 }, { id: generateId(), name: 'Abacate', portion: '1/2 unidade', calories: 160 }] },
-            { id: generateId(), name: 'Almoço', time: '12:30', foods: [{ id: generateId(), name: 'Frango grelhado', portion: '150g', calories: 200 }, { id: generateId(), name: 'Salada verde', portion: 'à vontade', calories: 20 }] },
-        ],
-    },
-];
-
-const loadFromStorage = (): MealPlan[] => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-        try {
-            return JSON.parse(stored);
-        } catch {
-            return mockInitialPlans;
-        }
-    }
-    return mockInitialPlans;
-};
-
-const saveToStorage = (plans: MealPlan[]) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
-};
+const generateId = () => Math.random().toString(36).substring(2, 15);
 
 const initialFormState = {
+    cliente_id: 0,
     patientName: '',
     planName: '',
     calories: 2000,
@@ -112,14 +82,14 @@ const initialFormState = {
     status: 'ativo' as const,
     notes: '',
     meals: [
-        { id: generateId(), name: 'Café da Manhã', time: '07:00', foods: [] },
-        { id: generateId(), name: 'Almoço', time: '12:30', foods: [] },
-        { id: generateId(), name: 'Jantar', time: '19:00', foods: [] },
+        { id: generateId(), nome: 'Café da Manhã', horario: '07:00', foods: [] as Food[] },
+        { id: generateId(), nome: 'Almoço', horario: '12:30', foods: [] as Food[] },
+        { id: generateId(), nome: 'Jantar', horario: '19:00', foods: [] as Food[] },
     ] as Meal[],
 };
 
-export function MealPlans() {
-    const [plans, setPlans] = useState<MealPlan[]>(() => loadFromStorage());
+export function MealPlans({ initialPlans = [] }: MealPlansProps) {
+    const [plans, setPlans] = useState<MealPlan[]>(initialPlans);
     const [searchTerm, setSearchTerm] = useState('');
     const [showFormModal, setShowFormModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
@@ -128,9 +98,12 @@ export function MealPlans() {
     const [formData, setFormData] = useState(initialFormState);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    const page = usePage();
+    const baseUrl = page.props.currentTeam ? `/${page.props.currentTeam.slug}` : '';
+
     useEffect(() => {
-        saveToStorage(plans);
-    }, [plans]);
+        setPlans(initialPlans);
+    }, [initialPlans]);
 
     const filteredPlans = plans.filter((plan) =>
         plan.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -148,6 +121,7 @@ export function MealPlans() {
         e.stopPropagation();
         setEditingPlan(plan);
         setFormData({
+            cliente_id: parseInt(plan.patientId) || 0,
             patientName: plan.patientName,
             planName: plan.planName,
             calories: plan.calories,
@@ -156,8 +130,15 @@ export function MealPlans() {
             status: plan.status,
             notes: plan.notes,
             meals: plan.meals.map(m => ({
-                ...m,
-                foods: [...m.foods],
+                id: m.id || generateId(),
+                nome: m.name,
+                horario: m.time,
+                foods: m.foods.map(f => ({
+                    id: f.id || generateId(),
+                    name: f.name,
+                    portion: f.portion,
+                    calories: f.calories,
+                })),
             })),
         });
         setErrors({});
@@ -186,56 +167,58 @@ export function MealPlans() {
     const handleSave = () => {
         if (!validateForm()) return;
 
-        const now = new Date().toLocaleDateString('pt-BR');
-        
-        if (editingPlan) {
-            const updatedPlan: MealPlan = {
-                ...editingPlan,
-                ...formData,
-                updatedAt: now,
-            };
-            setPlans(plans.map(p => p.id === editingPlan.id ? updatedPlan : p));
-        } else {
-            const newPlan: MealPlan = {
-                id: generateId(),
-                patientId: generateId(),
-                ...formData,
-                createdAt: now,
-                updatedAt: now,
-            };
-            setPlans([newPlan, ...plans]);
-        }
+        const mealsData = formData.meals.map((m, index) => ({
+            nome: m.nome,
+            horario: m.horario,
+            ordem: index,
+            alimentos: m.foods.map(f => ({
+                nome: f.name,
+                porcao: f.portion,
+                calorias: f.calories,
+            })),
+        }));
 
-        setShowFormModal(false);
-    };
-
-    const handleDuplicate = (plan: MealPlan, e: React.MouseEvent) => {
-        e.stopPropagation();
-        const now = new Date().toLocaleDateString('pt-BR');
-        const newPlan: MealPlan = {
-            ...plan,
-            id: generateId(),
-            patientId: generateId(),
-            planName: `${plan.planName} (Cópia)`,
-            status: 'ativo',
-            createdAt: now,
-            updatedAt: now,
-            meals: plan.meals.map(m => ({ ...m, id: generateId(), foods: m.foods.map(f => ({ ...f, id: generateId() })) })),
+        const data = {
+            cliente_id: formData.cliente_id || 1,
+            nome: formData.planName,
+            calorias: formData.calories,
+            objetivo: formData.objective,
+            restricoes: formData.restrictions,
+            observacoes: formData.notes,
+            status: formData.status,
+            meals: mealsData,
         };
-        setPlans([newPlan, ...plans]);
+
+        if (editingPlan) {
+            router.put(`${baseUrl}/planos/${editingPlan.id}`, data, {
+                onSuccess: () => {
+                    window.location.reload();
+                },
+            });
+        } else {
+            router.post(`${baseUrl}/planos`, data, {
+                onSuccess: () => {
+                    window.location.reload();
+                },
+            });
+        }
     };
 
     const handleDelete = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
         if (confirm('Tem certeza que deseja excluir este plano?')) {
-            setPlans(plans.filter(p => p.id !== id));
+            router.delete(`${baseUrl}/planos/${id}`, {
+                onSuccess: () => {
+                    setPlans(plans.filter(p => p.id !== id));
+                },
+            });
         }
     };
 
     const handleAddMeal = () => {
         setFormData({
             ...formData,
-            meals: [...formData.meals, { id: generateId(), name: '', time: '12:00', foods: [] }],
+            meals: [...formData.meals, { id: generateId(), nome: '', horario: '12:00', foods: [] }],
         });
     };
 
@@ -247,7 +230,7 @@ export function MealPlans() {
         });
     };
 
-    const handleUpdateMeal = (mealId: string, field: keyof Meal, value: string) => {
+    const handleUpdateMeal = (mealId: string, field: 'nome' | 'horario', value: string) => {
         setFormData({
             ...formData,
             meals: formData.meals.map(m =>
@@ -302,34 +285,23 @@ export function MealPlans() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Planos Alimentares</h1>
-                    <p className="text-gray-500">{plans.length} planos cadastrados</p>
-                </div>
-                <button
-                    onClick={handleOpenCreate}
-                    className="flex items-center justify-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
-                >
-                    <Plus className="w-5 h-5" />
-                    Novo Plano
-                </button>
-            </div>
+            <PageHeader
+                title="Planos Alimentares"
+                count={`${plans.length} planos cadastrados`}
+                action={{
+                    label: 'Novo Plano',
+                    icon: Plus,
+                    onClick: handleOpenCreate,
+                }}
+            />
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-                <div className="p-4 border-b border-gray-100">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Buscar por paciente ou nome do plano..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                        />
-                    </div>
-                </div>
-
+            <ContentCard
+                showSearch={{
+                    placeholder: 'Buscar por paciente ou nome do plano...',
+                    value: searchTerm,
+                    onChange: setSearchTerm,
+                }}
+            >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
                     {filteredPlans.map((plan) => (
                         <div
@@ -378,13 +350,6 @@ export function MealPlans() {
                                     Editar
                                 </button>
                                 <button
-                                    onClick={(e) => handleDuplicate(plan, e)}
-                                    className="p-2 text-gray-500 hover:bg-gray-200 rounded-lg transition-colors"
-                                    title="Duplicar"
-                                >
-                                    <Copy className="w-4 h-4" />
-                                </button>
-                                <button
                                     onClick={(e) => handleDelete(plan.id, e)}
                                     className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                     title="Excluir"
@@ -405,7 +370,7 @@ export function MealPlans() {
                         </button>
                     </div>
                 )}
-            </div>
+            </ContentCard>
 
             {showFormModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -504,8 +469,8 @@ export function MealPlans() {
                                             <div className="flex items-center gap-4 mb-4">
                                                 <div className="flex-1">
                                                     <select
-                                                        value={meal.name}
-                                                        onChange={(e) => handleUpdateMeal(meal.id, 'name', e.target.value)}
+                                                        value={meal.nome}
+                                                        onChange={(e) => handleUpdateMeal(meal.id, 'nome', e.target.value)}
                                                         className="w-full px-3 py-2 border rounded-lg"
                                                     >
                                                         <option value="">Selecione</option>
@@ -516,8 +481,8 @@ export function MealPlans() {
                                                 </div>
                                                 <div className="w-24">
                                                     <select
-                                                        value={meal.time}
-                                                        onChange={(e) => handleUpdateMeal(meal.id, 'time', e.target.value)}
+                                                        value={meal.horario}
+                                                        onChange={(e) => handleUpdateMeal(meal.id, 'horario', e.target.value)}
                                                         className="w-full px-3 py-2 border rounded-lg"
                                                     >
                                                         {MEAL_TIMES.map(time => (
