@@ -1,11 +1,33 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { Agenda } from '@/components/nutrition';
 
+interface PageProps {
+    consultas: Array<{
+        id: string;
+        patientId: string;
+        patientName: string;
+        phone: string;
+        time: string;
+        duration: number;
+        type: 'consulta' | 'retorno' | 'avaliacao';
+        status: 'confirmado' | 'pendente' | 'cancelado';
+        notes: string;
+    }>;
+    currentMonth: number;
+    currentYear: number;
+}
+
 export default function AgendaPage() {
+    const { consultas, currentMonth, currentYear } = usePage<PageProps>().props;
+
     return (
         <>
             <Head title="Agenda - NutriPro" />
-            <Agenda />
+            <Agenda 
+                initialAppointments={consultas}
+                initialMonth={currentMonth}
+                initialYear={currentYear}
+            />
         </>
     );
 }

@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Clock, User, Plus, X, Check, AlertCircle, Trash2, Edit2 } from 'lucide-react';
+import { usePage, router } from '@inertiajs/react';
+import { PageHeader, ContentCard } from '@/components/ui';
 
 interface Appointment {
     id: string;
@@ -7,6 +9,7 @@ interface Appointment {
     patientName: string;
     phone: string;
     time: string;
+    date?: string;
     duration: number;
     type: 'consulta' | 'retorno' | 'avaliacao';
     status: 'confirmado' | 'pendente' | 'cancelado';
@@ -19,69 +22,14 @@ interface DayData {
     appointments: Appointment[];
 }
 
-const STORAGE_KEY = 'nutripro_appointments';
+interface AgendaProps {
+    initialAppointments?: Appointment[];
+    initialMonth?: number;
+    initialYear?: number;
+}
+
 const DEFAULT_SLOTS = ['08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
 const generateId = () => Math.random().toString(36).substring(2, 15);
-
-const mockInitialAppointments: Appointment[] = [
-    { id: generateId(), patientId: '1', patientName: 'Maria Silva', phone: '(11) 99999-1111', time: '08:00', duration: 60, type: 'consulta', status: 'confirmado', notes: '' },
-    { id: generateId(), patientId: '2', patientName: 'João Santos', phone: '(11) 99999-2222', time: '09:00', duration: 60, type: 'retorno', status: 'confirmado', notes: '' },
-];
-
-const loadAppointments = (): Appointment[] => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-        try {
-            return JSON.parse(stored);
-        } catch {
-            return mockInitialAppointments;
-        }
-    }
-    return mockInitialAppointments;
-};
-
-const saveAppointments = (appointments: Appointment[]) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(appointments));
-};
-
-const getMonthData = (year: number, month: number, appointments: Appointment[]): DayData[] => {
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const dayDataMap = new Map<string, Appointment[]>();
-    
-    appointments.forEach(apt => {
-        const dayMatch = apt.id.match(/^(\d{2})/);
-        const day = dayMatch ? parseInt(dayMatch[1]) : new Date().getDate();
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        if (!dayDataMap.has(dateStr)) {
-            dayDataMap.set(dateStr, []);
-        }
-        dayDataMap.get(dateStr)!.push(apt);
-    });
-
-    const days: DayData[] = [];
-    
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const dayOfWeek = new Date(year, month, day).getDay();
-        
-        if (dayOfWeek === 0) {
-            days.push({ date: dateStr, slots: [], appointments: [] });
-            continue;
-        }
-
-        const dayAppointments = dayDataMap.get(dateStr) || [];
-        const usedSlots = dayAppointments.filter(a => a.status !== 'cancelado').map(a => a.time);
-        const availableSlots = DEFAULT_SLOTS.filter(s => !usedSlots.includes(s));
-
-        days.push({ 
-            date: dateStr, 
-            slots: availableSlots, 
-            appointments: dayAppointments.sort((a, b) => a.time.localeCompare(b.time))
-        });
-    }
-
-    return days;
-};
 
 const typeColors = {
     consulta: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', badge: 'bg-blue-200' },
@@ -89,10 +37,14 @@ const typeColors = {
     avaliacao: { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700', badge: 'bg-orange-200' },
 };
 
-export function Agenda() {
+export function Agenda({ initialAppointments = [], initialMonth, initialYear }: AgendaProps) {
     const today = new Date();
-    const [currentDate, setCurrentDate] = useState(today);
-    const [allAppointments, setAllAppointments] = useState<Appointment[]>(() => loadAppointments());
+    const [currentDate, setCurrentDate] = useState(
+        initialMonth && initialYear 
+            ? new Date(initialYear, initialMonth - 1, 1)
+            : today
+    );
+    const [allAppointments, setAllAppointments] = useState<Appointment[]>(initialAppointments);
     const [selectedDay, setSelectedDay] = useState<DayData | null>(null);
     const [showModal, setShowModal] = useState(false);
     const [showNewAppointment, setShowNewAppointment] = useState(false);
@@ -106,6 +58,9 @@ export function Agenda() {
         notes: '',
     });
 
+    const page = usePage();
+    const baseUrl = page.props.currentTeam ? `/${page.props.currentTeam.slug}` : '';
+
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const monthName = currentDate.toLocaleDateString('pt-BR', { month: 'long' });
@@ -116,8 +71,8 @@ export function Agenda() {
     const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
     useEffect(() => {
-        saveAppointments(allAppointments);
-    }, [allAppointments]);
+        setAllAppointments(initialAppointments);
+    }, [initialAppointments]);
 
     const goToPrevMonth = useCallback(() => {
         setCurrentDate(new Date(year, month - 1, 1));
@@ -140,51 +95,84 @@ export function Agenda() {
     const handleAddAppointment = () => {
         if (!selectedDay || !newAppointment.patientName || !newAppointment.time) return;
 
-        const appointment: Appointment = {
-            id: `${String(new Date().getDate()).padStart(2, '0')}${generateId()}`,
-            patientId: generateId(),
-            patientName: newAppointment.patientName,
-            phone: newAppointment.phone,
-            time: newAppointment.time,
-            duration: newAppointment.duration,
-            type: newAppointment.type,
+        const appointmentDate = selectedDay.date;
+        const data = {
+            cliente_id: 1,
+            data: appointmentDate,
+            horario: newAppointment.time,
+            duracao: newAppointment.duration,
+            tipo: newAppointment.type,
             status: 'pendente',
-            notes: newAppointment.notes,
+            observacoes: newAppointment.notes,
+            telefone: newAppointment.phone,
         };
 
-        setAllAppointments([...allAppointments, appointment]);
-        setNewAppointment({ patientName: '', phone: '', time: '', duration: 60, type: 'consulta', notes: '' });
-        setShowNewAppointment(false);
+        router.post(`${baseUrl}/consultas`, data, {
+            onSuccess: () => {
+                const appointment: Appointment = {
+                    id: generateId(),
+                    patientId: '1',
+                    patientName: newAppointment.patientName,
+                    phone: newAppointment.phone,
+                    time: newAppointment.time,
+                    date: appointmentDate,
+                    duration: newAppointment.duration,
+                    type: newAppointment.type,
+                    status: 'pendente',
+                    notes: newAppointment.notes,
+                };
+                setAllAppointments([...allAppointments, appointment]);
+                setNewAppointment({ patientName: '', phone: '', time: '', duration: 60, type: 'consulta', notes: '' });
+                setShowNewAppointment(false);
+            },
+        });
     };
 
     const handleSaveEdit = () => {
         if (!editingAppointment || !newAppointment.patientName || !newAppointment.time) return;
 
-        const updated = allAppointments.map(apt =>
-            apt.id === editingAppointment.id
-                ? { ...apt, ...newAppointment }
-                : apt
-        );
-
-        setAllAppointments(updated);
-        setEditingAppointment(null);
-        setShowNewAppointment(false);
-        setNewAppointment({ patientName: '', phone: '', time: '', duration: 60, type: 'consulta', notes: '' });
+        router.put(`${baseUrl}/consultas/${editingAppointment.id}`, {
+            horario: newAppointment.time,
+            duracao: newAppointment.duration,
+            tipo: newAppointment.type,
+            status: newAppointment.status || 'pendente',
+            observacoes: newAppointment.notes,
+        }, {
+            onSuccess: () => {
+                const updated = allAppointments.map(apt =>
+                    apt.id === editingAppointment.id
+                        ? { ...apt, ...newAppointment }
+                        : apt
+                );
+                setAllAppointments(updated);
+                setEditingAppointment(null);
+                setShowNewAppointment(false);
+                setNewAppointment({ patientName: '', phone: '', time: '', duration: 60, type: 'consulta', notes: '' });
+            },
+        });
     };
 
     const handleDeleteAppointment = (aptId: string, e: React.MouseEvent) => {
         e.stopPropagation();
         if (confirm('Excluir esta consulta?')) {
-            setAllAppointments(allAppointments.filter(apt => apt.id !== aptId));
+            router.delete(`${baseUrl}/consultas/${aptId}`, {
+                onSuccess: () => {
+                    setAllAppointments(allAppointments.filter(apt => apt.id !== aptId));
+                },
+            });
         }
     };
 
     const handleCancelAppointment = (aptId: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        const updated = allAppointments.map(apt =>
-            apt.id === aptId ? { ...apt, status: 'cancelado' as const } : apt
-        );
-        setAllAppointments(updated);
+        router.put(`${baseUrl}/consultas/${aptId}`, { status: 'cancelado' }, {
+            onSuccess: () => {
+                const updated = allAppointments.map(apt =>
+                    apt.id === aptId ? { ...apt, status: 'cancelado' as const } : apt
+                );
+                setAllAppointments(updated);
+            },
+        });
     };
 
     const handleCloseModal = () => {
@@ -262,14 +250,12 @@ export function Agenda() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Agenda</h1>
-                    <p className="text-gray-500">Gerencie suas consultas e disponibilidade</p>
-                </div>
-            </div>
+            <PageHeader
+                title="Agenda"
+                description="Gerencie suas consultas e disponibilidade"
+            />
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <ContentCard>
                 <div className="flex items-center justify-between p-4 border-b border-gray-100">
                     <button onClick={goToPrevMonth} className="p-2 hover:bg-gray-100 rounded-lg">
                         <ChevronLeft className="w-5 h-5 text-gray-600" />
@@ -293,7 +279,7 @@ export function Agenda() {
                 <div className="grid grid-cols-7 gap-1 p-4">
                     {renderCalendarDays()}
                 </div>
-            </div>
+            </ContentCard>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex items-center gap-2 bg-white p-4 rounded-lg border border-gray-100">
@@ -502,4 +488,51 @@ export function Agenda() {
             )}
         </div>
     );
+}
+
+function getMonthData(year: number, month: number, appointments: Appointment[]): DayData[] {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const dayDataMap = new Map<string, Appointment[]>();
+    
+    appointments.forEach(apt => {
+        let dateStr: string;
+        
+        if (apt.date) {
+            dateStr = apt.date;
+        } else {
+            const dayMatch = apt.id.match(/^(\d{2})/);
+            const day = dayMatch ? parseInt(dayMatch[1]) : new Date().getDate();
+            dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        }
+        
+        if (!dayDataMap.has(dateStr)) {
+            dayDataMap.set(dateStr, []);
+        }
+        dayDataMap.get(dateStr)!.push(apt);
+    });
+
+    const days: DayData[] = [];
+    const DEFAULT_SLOTS = ['08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayOfWeek = new Date(year, month, day).getDay();
+        
+        if (dayOfWeek === 0) {
+            days.push({ date: dateStr, slots: [], appointments: [] });
+            continue;
+        }
+
+        const dayAppointments = dayDataMap.get(dateStr) || [];
+        const usedSlots = dayAppointments.filter(a => a.status !== 'cancelado').map(a => a.time);
+        const availableSlots = DEFAULT_SLOTS.filter(s => !usedSlots.includes(s));
+
+        days.push({ 
+            date: dateStr, 
+            slots: availableSlots, 
+            appointments: dayAppointments.sort((a, b) => a.time.localeCompare(b.time))
+        });
+    }
+
+    return days;
 }

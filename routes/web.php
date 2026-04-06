@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\ConsultaController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PlanoAlimentarController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
@@ -13,10 +16,25 @@ Route::inertia('/', 'welcome', [
 Route::prefix('{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])
     ->group(function () {
-        Route::inertia('dashboard', 'dashboard')->name('dashboard');
+        Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        
         Route::get('clientes', [ClienteController::class, 'index'])->name('cliente.index');
-        Route::inertia('planos', 'planos')->name('planos');
-        Route::inertia('agenda', 'agenda')->name('agenda');
+        Route::post('clientes', [ClienteController::class, 'store'])->name('clientes.store');
+        Route::put('clientes/{cliente}', [ClienteController::class, 'update'])->name('clientes.update');
+        Route::delete('clientes/{cliente}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
+        
+        Route::get('pacientes', [ClienteController::class, 'index'])->name('pacientes');
+        
+        Route::get('planos', [PlanoAlimentarController::class, 'index'])->name('planos');
+        Route::post('planos', [PlanoAlimentarController::class, 'store'])->name('planos.store');
+        Route::put('planos/{plano}', [PlanoAlimentarController::class, 'update'])->name('planos.update');
+        Route::delete('planos/{plano}', [PlanoAlimentarController::class, 'destroy'])->name('planos.destroy');
+        
+        Route::get('agenda', [ConsultaController::class, 'index'])->name('agenda');
+        Route::post('consultas', [ConsultaController::class, 'store'])->name('consultas.store');
+        Route::put('consultas/{consulta}', [ConsultaController::class, 'update'])->name('consultas.update');
+        Route::delete('consultas/{consulta}', [ConsultaController::class, 'destroy'])->name('consultas.destroy');
+        
         Route::inertia('relatorios', 'relatorios')->name('relatorios');
     });
 

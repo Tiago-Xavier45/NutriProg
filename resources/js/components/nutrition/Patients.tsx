@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, Phone, Mail, Calendar, X } from 'lucide-react';
+import { usePage, router } from '@inertiajs/react';
+import { PageHeader, ContentCard } from '@/components/ui';
 
 interface Patient {
     id: number;
@@ -14,18 +16,17 @@ interface Patient {
     lastVisit: string;
 }
 
-const mockPatients: Patient[] = [
-    { id: 1, name: 'Maria Silva', email: 'maria.silva@email.com', phone: '(11) 99999-1111', age: 32, weight: '68kg', height: '1.65m', plan: 'Low Carb', status: 'Ativo', lastVisit: '28/03/2024' },
-    { id: 2, name: 'João Santos', email: 'joao.santos@email.com', phone: '(11) 99999-2222', age: 45, weight: '85kg', height: '1.78m', plan: 'Mediterrânea', status: 'Ativo', lastVisit: '27/03/2024' },
-    { id: 3, name: 'Ana Costa', email: 'ana.costa@email.com', phone: '(11) 99999-3333', age: 28, weight: '55kg', height: '1.60m', plan: 'Halal', status: 'Pendente', lastVisit: '26/03/2024' },
-    { id: 4, name: 'Pedro Oliveira', email: 'pedro.oliveira@email.com', phone: '(11) 99999-4444', age: 38, weight: '92kg', height: '1.82m', plan: 'Vegetariana', status: 'Ativo', lastVisit: '25/03/2024' },
-    { id: 5, name: 'Carla Mendes', email: 'carla.mendes@email.com', phone: '(11) 99999-5555', age: 25, weight: '62kg', height: '1.68m', plan: 'Low FODMAP', status: 'Ativo', lastVisit: '24/03/2024' },
-    { id: 6, name: 'Roberto Ferreira', email: 'roberto.ferreira@email.com', phone: '(11) 99999-6666', age: 52, weight: '78kg', height: '1.70m', plan: 'Dash', status: 'Inativo', lastVisit: '10/02/2024' },
-];
+interface PatientsProps {
+    initialPatients?: Patient[];
+    initialFilters?: {
+        search: string;
+        status: string;
+    };
+}
 
-export function Patients() {
-    const [patients, setPatients] = useState<Patient[]>(mockPatients);
-    const [searchTerm, setSearchTerm] = useState('');
+export function Patients({ initialPatients = [], initialFilters = { search: '', status: 'all' } }: PatientsProps) {
+    const [patients, setPatients] = useState<Patient[]>(initialPatients);
+    const [searchTerm, setSearchTerm] = useState(initialFilters.search);
     const [showModal, setShowModal] = useState(false);
     const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
     const [formData, setFormData] = useState({
@@ -38,6 +39,13 @@ export function Patients() {
         plan: '',
         status: 'Ativo' as Patient['status'],
     });
+
+    const page = usePage();
+    const baseUrl = page.props.currentTeam ? `/${page.props.currentTeam.slug}` : '';
+
+    useEffect(() => {
+        setPatients(initialPatients);
+    }, [initialPatients]);
 
     const filteredPatients = patients.filter((patient) =>
         patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -76,60 +84,73 @@ export function Patients() {
     const handleSave = () => {
         if (!formData.name || !formData.email) return;
 
+        const data = {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            age: formData.age ? parseInt(formData.age) : null,
+            weight: formData.weight || null,
+            height: formData.height || null,
+            plan: formData.plan || null,
+            status: formData.status,
+        };
+
         if (editingPatient) {
-            setPatients(patients.map(p => 
-                p.id === editingPatient.id 
-                    ? { ...p, ...formData, age: Number(formData.age) }
-                    : p
-            ));
+            router.put(`${baseUrl}/clientes/${editingPatient.id}`, data, {
+                onSuccess: () => {
+                    setPatients(patients.map(p => 
+                        p.id === editingPatient.id 
+                            ? { ...p, ...data, age: Number(formData.age) }
+                            : p
+                    ));
+                    setShowModal(false);
+                },
+            });
         } else {
-            const newPatient: Patient = {
-                id: Math.max(...patients.map(p => p.id)) + 1,
-                ...formData,
-                age: Number(formData.age),
-                lastVisit: new Date().toLocaleDateString('pt-BR'),
-            };
-            setPatients([newPatient, ...patients]);
+            router.post(`${baseUrl}/clientes`, data, {
+                onSuccess: () => {
+                    const newPatient: Patient = {
+                        id: Date.now(),
+                        ...data,
+                        age: Number(formData.age),
+                        lastVisit: new Date().toLocaleDateString('pt-BR'),
+                    };
+                    setPatients([newPatient, ...patients]);
+                    setShowModal(false);
+                },
+            });
         }
-        setShowModal(false);
     };
 
     const handleDelete = (id: number) => {
         if (confirm('Tem certeza que deseja excluir este paciente?')) {
-            setPatients(patients.filter(p => p.id !== id));
+            router.delete(`${baseUrl}/clientes/${id}`, {
+                onSuccess: () => {
+                    setPatients(patients.filter(p => p.id !== id));
+                },
+            });
         }
     };
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Pacientes</h1>
-                    <p className="text-gray-500">{patients.length} pacientes cadastrados</p>
-                </div>
-                <button
-                    onClick={() => handleOpenModal()}
-                    className="flex items-center justify-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
-                >
-                    <Plus className="w-5 h-5" />
-                    Novo Paciente
-                </button>
-            </div>
+            <PageHeader
+                title="Pacientes"
+                count={`${patients.length} pacientes cadastrados`}
+                action={{
+                    label: 'Novo Paciente',
+                    icon: Plus,
+                    onClick: () => handleOpenModal(),
+                }}
+            />
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-                <div className="p-4 border-b border-gray-100">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Buscar por nome ou email..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
-                        />
-                    </div>
-                </div>
-
+            <ContentCard
+                showSearch={{
+                    placeholder: 'Buscar por nome ou email...',
+                    value: searchTerm,
+                    onChange: setSearchTerm,
+                }}
+            >
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-gray-50">
@@ -212,7 +233,7 @@ export function Patients() {
                         Nenhum paciente encontrado
                     </div>
                 )}
-            </div>
+            </ContentCard>
 
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
