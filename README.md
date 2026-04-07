@@ -159,16 +159,6 @@ A autenticação é gerenciada pelo **Laravel Fortify**, com suporte a:
 - Redefinição de senha
 - Verificação de e-mail
 - Autenticação de dois fatores (2FA)
-
----
-
-## 🤝 Contribuindo
-
-1. Faça um fork do repositório
-2. Crie uma branch para sua feature: `git checkout -b feature/minha-feature`
-3. Certifique-se de que os testes passam: `composer run test`
-4. Abra um Pull Request
-
 ---
 
 ## 📄 Licença
