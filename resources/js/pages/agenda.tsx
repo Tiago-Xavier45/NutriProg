@@ -15,10 +15,11 @@ interface PageProps {
     }>;
     currentMonth: number;
     currentYear: number;
+    pacientes: Array<{ id: string; name: string }>;
 }
 
 export default function AgendaPage() {
-    const { consultas, currentMonth, currentYear } = usePage<PageProps>().props;
+    const { consultas, currentMonth, currentYear, pacientes } = usePage<PageProps>().props;
 
     return (
         <>
@@ -27,6 +28,7 @@ export default function AgendaPage() {
                 initialAppointments={consultas}
                 initialMonth={currentMonth}
                 initialYear={currentYear}
+                pacientes={pacientes}
             />
         </>
     );

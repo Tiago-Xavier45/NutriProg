@@ -4,6 +4,7 @@ use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ConsultaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PlanoAlimentarController;
+use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
@@ -20,22 +21,38 @@ Route::prefix('{current_team}')
         
         Route::get('clientes', [ClienteController::class, 'index'])->name('cliente.index');
         Route::post('clientes', [ClienteController::class, 'store'])->name('clientes.store');
-        Route::put('clientes/{cliente}', [ClienteController::class, 'update'])->name('clientes.update');
-        Route::delete('clientes/{cliente}', [ClienteController::class, 'destroy'])->name('clientes.destroy');
+        Route::put('clientes/{cliente_id}', [ClienteController::class, 'update'])
+            ->name('clientes.update')
+            ->withoutMiddleware(\Illuminate\Routing\Middleware\SubstituteBindings::class);
+        Route::delete('clientes/{cliente_id}', [ClienteController::class, 'destroy'])
+            ->name('clientes.destroy')
+            ->withoutMiddleware(\Illuminate\Routing\Middleware\SubstituteBindings::class);
         
         Route::get('pacientes', [ClienteController::class, 'index'])->name('pacientes');
         
         Route::get('planos', [PlanoAlimentarController::class, 'index'])->name('planos');
         Route::post('planos', [PlanoAlimentarController::class, 'store'])->name('planos.store');
-        Route::put('planos/{plano}', [PlanoAlimentarController::class, 'update'])->name('planos.update');
-        Route::delete('planos/{plano}', [PlanoAlimentarController::class, 'destroy'])->name('planos.destroy');
+        Route::put('planos/{plano_id}', [PlanoAlimentarController::class, 'update'])
+            ->name('planos.update')
+            ->withoutMiddleware(\Illuminate\Routing\Middleware\SubstituteBindings::class);
+        Route::delete('planos/{plano_id}', [PlanoAlimentarController::class, 'destroy'])
+            ->name('planos.destroy')
+            ->withoutMiddleware(\Illuminate\Routing\Middleware\SubstituteBindings::class);
         
         Route::get('agenda', [ConsultaController::class, 'index'])->name('agenda');
         Route::post('consultas', [ConsultaController::class, 'store'])->name('consultas.store');
-        Route::put('consultas/{consulta}', [ConsultaController::class, 'update'])->name('consultas.update');
-        Route::delete('consultas/{consulta}', [ConsultaController::class, 'destroy'])->name('consultas.destroy');
+        Route::put('consultas/{consulta_id}', [ConsultaController::class, 'update'])
+            ->name('consultas.update')
+            ->withoutMiddleware(\Illuminate\Routing\Middleware\SubstituteBindings::class);
+        Route::delete('consultas/{consulta_id}', [ConsultaController::class, 'destroy'])
+            ->name('consultas.destroy')
+            ->withoutMiddleware(\Illuminate\Routing\Middleware\SubstituteBindings::class);
         
-        Route::inertia('relatorios', 'relatorios')->name('relatorios');
+        Route::get('relatorios', [RelatorioController::class, 'index'])->name('relatorios');
+        Route::post('relatorios', [RelatorioController::class, 'store'])->name('relatorios.store');
+        Route::match(['post', 'delete'], 'relatorios/{relatorio_id}', [RelatorioController::class, 'destroy'])
+            ->name('relatorios.destroy')
+            ->withoutMiddleware(\Illuminate\Routing\Middleware\SubstituteBindings::class);
     });
 
 Route::middleware(['auth'])->group(function () {
