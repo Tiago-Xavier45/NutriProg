@@ -58,8 +58,14 @@ class ClienteController extends Controller
         return redirect()->back()->with('success', 'Paciente criado com sucesso!');
     }
 
-    public function update(Request $request, Cliente $cliente)
+    public function update(Request $request)
     {
+        $clienteId = $request->route('cliente_id') ?? $request->route('cliente');
+        $cliente = Cliente::find((int) $clienteId);
+        if (!$cliente) {
+            return redirect()->back()->with('error', 'Paciente não encontrado');
+        }
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
@@ -81,8 +87,13 @@ class ClienteController extends Controller
         return redirect()->back()->with('success', 'Paciente atualizado com sucesso!');
     }
 
-    public function destroy(Cliente $cliente)
+    public function destroy(Request $request)
     {
+        $clienteId = $request->route('cliente_id') ?? $request->route('cliente');
+        $cliente = Cliente::find((int) $clienteId);
+        if (!$cliente) {
+            return redirect()->back()->with('error', 'Paciente não encontrado');
+        }
         $cliente->delete();
 
         return redirect()->back()->with('success', 'Paciente excluído com sucesso!');

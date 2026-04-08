@@ -34,10 +34,18 @@ class ConsultaController extends Controller
                 ];
             });
 
+        $pacientes = Cliente::orderBy('name')->get()->map(function ($cliente) {
+            return [
+                'id' => (string) $cliente->id,
+                'name' => $cliente->name,
+            ];
+        });
+
         return Inertia::render('agenda', [
             'consultas' => $consultas,
             'currentMonth' => $month,
             'currentYear' => $year,
+            'pacientes' => $pacientes,
         ]);
     }
 
@@ -59,8 +67,14 @@ class ConsultaController extends Controller
         return redirect()->back()->with('success', 'Consulta agendada com sucesso!');
     }
 
-    public function update(Request $request, Consulta $consulta)
+    public function update(Request $request)
     {
+        $consultaId = $request->route('consulta_id') ?? $request->route('consulta');
+        $consulta = Consulta::find((int) $consultaId);
+        if (!$consulta) {
+            return redirect()->back()->with('error', 'Consulta não encontrada');
+        }
+        
         $validated = $request->validate([
             'cliente_id' => 'sometimes|exists:clientes,id',
             'data' => 'sometimes|date',
@@ -77,8 +91,13 @@ class ConsultaController extends Controller
         return redirect()->back()->with('success', 'Consulta atualizada com sucesso!');
     }
 
-    public function destroy(Consulta $consulta)
+    public function destroy(Request $request)
     {
+        $consultaId = $request->route('consulta_id') ?? $request->route('consulta');
+        $consulta = Consulta::find((int) $consultaId);
+        if (!$consulta) {
+            return redirect()->back()->with('error', 'Consulta não encontrada');
+        }
         $consulta->delete();
 
         return redirect()->back()->with('success', 'Consulta excluída com sucesso!');

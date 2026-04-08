@@ -96,7 +96,10 @@ export function Patients({ initialPatients = [], initialFilters = { search: '', 
         };
 
         if (editingPatient) {
-            router.put(`${baseUrl}/clientes/${editingPatient.id}`, data, {
+            router.post(`${baseUrl}/clientes/${editingPatient.id}`, {
+                _method: 'PUT',
+                ...data,
+            }, {
                 onSuccess: () => {
                     setPatients(patients.map(p => 
                         p.id === editingPatient.id 
@@ -124,7 +127,9 @@ export function Patients({ initialPatients = [], initialFilters = { search: '', 
 
     const handleDelete = (id: number) => {
         if (confirm('Tem certeza que deseja excluir este paciente?')) {
-            router.delete(`${baseUrl}/clientes/${id}`, {
+            router.post(`${baseUrl}/clientes/${id}`, {
+                _method: 'DELETE',
+            }, {
                 onSuccess: () => {
                     setPatients(patients.filter(p => p.id !== id));
                 },

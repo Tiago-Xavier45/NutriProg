@@ -26,6 +26,7 @@ interface AgendaProps {
     initialAppointments?: Appointment[];
     initialMonth?: number;
     initialYear?: number;
+    pacientes?: Array<{ id: string; name: string }>;
 }
 
 const DEFAULT_SLOTS = ['08:00', '09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'];
@@ -37,7 +38,7 @@ const typeColors = {
     avaliacao: { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700', badge: 'bg-orange-200' },
 };
 
-export function Agenda({ initialAppointments = [], initialMonth, initialYear }: AgendaProps) {
+export function Agenda({ initialAppointments = [], initialMonth, initialYear, pacientes = [] }: AgendaProps) {
     const today = new Date();
     const [currentDate, setCurrentDate] = useState(
         initialMonth && initialYear 
@@ -49,6 +50,7 @@ export function Agenda({ initialAppointments = [], initialMonth, initialYear }: 
     const [showModal, setShowModal] = useState(false);
     const [showNewAppointment, setShowNewAppointment] = useState(false);
     const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+    const [selectedPatientId, setSelectedPatientId] = useState<string>('');
     const [newAppointment, setNewAppointment] = useState({
         patientName: '',
         phone: '',
@@ -93,11 +95,12 @@ export function Agenda({ initialAppointments = [], initialMonth, initialYear }: 
     };
 
     const handleAddAppointment = () => {
-        if (!selectedDay || !newAppointment.patientName || !newAppointment.time) return;
+        if (!selectedDay || !selectedPatientId || !newAppointment.time) return;
 
+        const selectedPatient = pacientes.find(p => p.id === selectedPatientId);
         const appointmentDate = selectedDay.date;
         const data = {
-            cliente_id: 1,
+            cliente_id: selectedPatientId,
             data: appointmentDate,
             horario: newAppointment.time,
             duracao: newAppointment.duration,
@@ -111,8 +114,8 @@ export function Agenda({ initialAppointments = [], initialMonth, initialYear }: 
             onSuccess: () => {
                 const appointment: Appointment = {
                     id: generateId(),
-                    patientId: '1',
-                    patientName: newAppointment.patientName,
+                    patientId: selectedPatientId,
+                    patientName: selectedPatient?.name || '',
                     phone: newAppointment.phone,
                     time: newAppointment.time,
                     date: appointmentDate,
@@ -123,15 +126,18 @@ export function Agenda({ initialAppointments = [], initialMonth, initialYear }: 
                 };
                 setAllAppointments([...allAppointments, appointment]);
                 setNewAppointment({ patientName: '', phone: '', time: '', duration: 60, type: 'consulta', notes: '' });
+                setSelectedPatientId('');
                 setShowNewAppointment(false);
             },
         });
     };
 
     const handleSaveEdit = () => {
-        if (!editingAppointment || !newAppointment.patientName || !newAppointment.time) return;
+        if (!editingAppointment || !newAppointment.time || !selectedPatientId) return;
 
+        const selectedPatient = pacientes.find(p => p.id === selectedPatientId);
         router.put(`${baseUrl}/consultas/${editingAppointment.id}`, {
+            cliente_id: selectedPatientId,
             horario: newAppointment.time,
             duracao: newAppointment.duration,
             tipo: newAppointment.type,
@@ -141,13 +147,14 @@ export function Agenda({ initialAppointments = [], initialMonth, initialYear }: 
             onSuccess: () => {
                 const updated = allAppointments.map(apt =>
                     apt.id === editingAppointment.id
-                        ? { ...apt, ...newAppointment }
+                        ? { ...apt, patientId: selectedPatientId, patientName: selectedPatient?.name || apt.patientName, ...newAppointment }
                         : apt
                 );
                 setAllAppointments(updated);
                 setEditingAppointment(null);
                 setShowNewAppointment(false);
                 setNewAppointment({ patientName: '', phone: '', time: '', duration: 60, type: 'consulta', notes: '' });
+                setSelectedPatientId('');
             },
         });
     };
@@ -165,7 +172,9 @@ export function Agenda({ initialAppointments = [], initialMonth, initialYear }: 
 
     const handleCancelAppointment = (aptId: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        router.put(`${baseUrl}/consultas/${aptId}`, { status: 'cancelado' }, {
+        router.put(`${baseUrl}/consultas/${aptId}`, {
+            status: 'cancelado',
+        }, {
             onSuccess: () => {
                 const updated = allAppointments.map(apt =>
                     apt.id === aptId ? { ...apt, status: 'cancelado' as const } : apt
@@ -322,13 +331,16 @@ export function Agenda({ initialAppointments = [], initialMonth, initialYear }: 
                                     
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Paciente *</label>
-                                        <input
-                                            type="text"
-                                            value={newAppointment.patientName}
-                                            onChange={(e) => setNewAppointment({...newAppointment, patientName: e.target.value})}
+                                        <select
+                                            value={selectedPatientId}
+                                            onChange={(e) => setSelectedPatientId(e.target.value)}
                                             className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
-                                            placeholder="Nome do paciente"
-                                        />
+                                        >
+                                            <option value="">Selecione um paciente</option>
+                                            {pacientes.map(p => (
+                                                <option key={p.id} value={p.id}>{p.name}</option>
+                                            ))}
+                                        </select>
                                     </div>
 
                                     <div>
@@ -384,14 +396,14 @@ export function Agenda({ initialAppointments = [], initialMonth, initialYear }: 
 
                                     <div className="flex gap-3">
                                         <button
-                                            onClick={() => { setShowNewAppointment(false); setEditingAppointment(null); setNewAppointment({ patientName: '', phone: '', time: '', duration: 60, type: 'consulta', notes: '' }); }}
+                                            onClick={() => { setShowNewAppointment(false); setEditingAppointment(null); setNewAppointment({ patientName: '', phone: '', time: '', duration: 60, type: 'consulta', notes: '' }); setSelectedPatientId(''); }}
                                             className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
                                         >
                                             Cancelar
                                         </button>
                                         <button
                                             onClick={editingAppointment ? handleSaveEdit : handleAddAppointment}
-                                            disabled={!newAppointment.patientName || !newAppointment.time}
+                                            disabled={!selectedPatientId || !newAppointment.time}
                                             className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
                                         >
                                             {editingAppointment ? 'Salvar' : 'Agendar'}
@@ -448,7 +460,7 @@ export function Agenda({ initialAppointments = [], initialMonth, initialYear }: 
                                                             </div>
                                                             {apt.status !== 'cancelado' && (
                                                                 <div className="flex gap-2 mt-3 pt-3 border-t border-gray-200">
-                                                                    <button onClick={(e) => { setEditingAppointment(apt); setNewAppointment({ patientName: apt.patientName, phone: apt.phone, time: apt.time, duration: apt.duration, type: apt.type, notes: apt.notes }); setShowNewAppointment(true); }} className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs bg-white border border-gray-300 rounded hover:bg-gray-50">
+                                                                    <button onClick={(e) => { setEditingAppointment(apt); setSelectedPatientId(apt.patientId); setNewAppointment({ patientName: apt.patientName, phone: apt.phone, time: apt.time, duration: apt.duration, type: apt.type, notes: apt.notes }); setShowNewAppointment(true); }} className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs bg-white border border-gray-300 rounded hover:bg-gray-50">
                                                                         <Edit2 className="w-3 h-3" /> Editar
                                                                     </button>
                                                                     <button onClick={(e) => handleCancelAppointment(apt.id, e)} className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs bg-yellow-100 text-yellow-700 border border-yellow-200 rounded hover:bg-yellow-200">

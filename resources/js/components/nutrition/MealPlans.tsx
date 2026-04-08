@@ -190,7 +190,10 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
         };
 
         if (editingPlan) {
-            router.put(`${baseUrl}/planos/${editingPlan.id}`, data, {
+            router.post(`${baseUrl}/planos/${editingPlan.id}`, {
+                _method: 'PUT',
+                ...data,
+            }, {
                 onSuccess: () => {
                     window.location.reload();
                 },
@@ -207,7 +210,9 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
     const handleDelete = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
         if (confirm('Tem certeza que deseja excluir este plano?')) {
-            router.delete(`${baseUrl}/planos/${id}`, {
+            router.post(`${baseUrl}/planos/${id}`, {
+                _method: 'DELETE',
+            }, {
                 onSuccess: () => {
                     setPlans(plans.filter(p => p.id !== id));
                 },

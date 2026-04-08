@@ -117,8 +117,14 @@ class PlanoAlimentarController extends Controller
         return redirect()->back()->with('success', 'Plano alimentar criado com sucesso!');
     }
 
-    public function update(Request $request, PlanoAlimentar $plano)
+    public function update(Request $request)
     {
+        $planoId = $request->route('plano_id') ?? $request->route('plano');
+        $plano = PlanoAlimentar::find((int) $planoId);
+        if (!$plano) {
+            return redirect()->back()->with('error', 'Plano não encontrado');
+        }
+        
         $validated = $request->validate([
             'cliente_id' => 'sometimes|exists:clientes,id',
             'nome' => 'sometimes|string|max:255',
@@ -161,8 +167,13 @@ class PlanoAlimentarController extends Controller
         return redirect()->back()->with('success', 'Plano alimentar atualizado com sucesso!');
     }
 
-    public function destroy(PlanoAlimentar $plano)
+    public function destroy(Request $request)
     {
+        $planoId = $request->route('plano_id') ?? $request->route('plano');
+        $plano = PlanoAlimentar::find((int) $planoId);
+        if (!$plano) {
+            return redirect()->back()->with('error', 'Plano não encontrado');
+        }
         $plano->delete();
 
         return redirect()->back()->with('success', 'Plano alimentar excluído com sucesso!');
