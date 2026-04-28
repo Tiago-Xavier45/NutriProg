@@ -183,6 +183,7 @@ export function Agenda({
                 });
                 setSelectedPatientId('');
                 setShowNewAppointment(false);
+                setShowModal(false);
             },
         });
     };
@@ -220,6 +221,7 @@ export function Agenda({
                     setAllAppointments(updated);
                     setEditingAppointment(null);
                     setShowNewAppointment(false);
+                    setShowModal(false);
                     setNewAppointment({
                         patientName: '',
                         phone: '',
