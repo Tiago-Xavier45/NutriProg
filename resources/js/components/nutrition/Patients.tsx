@@ -12,6 +12,16 @@ import {
 import { usePage, router } from '@inertiajs/react';
 import { PageHeader, ContentCard } from '@/components/ui';
 
+// Funções auxiliares para formatação de altura
+const formatHeightForDisplay = (height: string | number): string => {
+    if (!height) return '';
+    return String(height).replace('.', ',');
+};
+
+const formatHeightForBackend = (height: string): string => {
+    return height.replace(',', '.');
+};
+
 interface Patient {
     id: number;
     name: string;
@@ -76,7 +86,7 @@ export function Patients({
                 phone: patient.phone,
                 age: String(patient.age),
                 weight: patient.weight,
-                height: patient.height,
+                height: formatHeightForDisplay(patient.height),
                 plan: patient.plan,
                 status: patient.status,
             });
@@ -105,7 +115,7 @@ export function Patients({
             phone: formData.phone,
             age: formData.age ? parseInt(formData.age) : null,
             weight: formData.weight || null,
-            height: formData.height || null,
+            height: formatHeightForBackend(formData.height),
             plan: formData.plan || null,
             status: formData.status,
         };
@@ -384,31 +394,53 @@ export function Patients({
                                     <label className="mb-1 block text-sm font-medium text-gray-700">
                                         Peso
                                     </label>
-                                    <input
-                                        type="text"
-                                        value={formData.weight}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                weight: e.target.value,
-                                            })
-                                        }
-                                        className="w-full rounded-lg border px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={formData.weight}
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(/kg$/i, '').trim();
+                                                setFormData({
+                                                    ...formData,
+                                                    weight: val,
+                                                });
+                                            }}
+                                            placeholder="Ex: 75.5"
+                                            className="w-full rounded-lg border px-4 py-2 pr-10 outline-none focus:ring-2 focus:ring-emerald-500"
+                                        />
+                                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-medium">
+                                            kg
+                                        </span>
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="mb-1 block text-sm font-medium text-gray-700">
-                                        Altura
+                                        Altura (m)
                                     </label>
                                     <input
                                         type="text"
                                         value={formData.height}
-                                        onChange={(e) =>
+                                        onChange={(e) => {
+                                            // Remove tudo exceto números
+                                            let val = e.target.value.replace(/[^\d]/g, '');
+                                            
+                                            // Aplica máscara: insere vírgula após o primeiro dígito
+                                            if (val.length >= 2) {
+                                                val = val.substring(0, 1) + ',' + val.substring(1, 3);
+                                            }
+                                            
+                                            // Limita a 4 caracteres (ex: 1,75)
+                                            if (val.length > 4) {
+                                                val = val.substring(0, 4);
+                                            }
+                                            
                                             setFormData({
                                                 ...formData,
-                                                height: e.target.value,
-                                            })
-                                        }
+                                                height: val,
+                                            });
+                                        }}
+                                        placeholder="Ex: 1,75"
+                                        maxLength={4}
                                         className="w-full rounded-lg border px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
                                     />
                                 </div>

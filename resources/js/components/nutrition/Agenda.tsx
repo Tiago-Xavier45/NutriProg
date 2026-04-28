@@ -37,7 +37,7 @@ interface AgendaProps {
     initialAppointments?: Appointment[];
     initialMonth?: number;
     initialYear?: number;
-    pacientes?: Array<{ id: string; name: string }>;
+    pacientes?: Array<{ id: string; name: string; phone: string }>;
 }
 
 const DEFAULT_SLOTS = [
@@ -183,6 +183,7 @@ export function Agenda({
                 });
                 setSelectedPatientId('');
                 setShowNewAppointment(false);
+                setShowModal(false);
             },
         });
     };
@@ -220,6 +221,7 @@ export function Agenda({
                     setAllAppointments(updated);
                     setEditingAppointment(null);
                     setShowNewAppointment(false);
+                    setShowModal(false);
                     setNewAppointment({
                         patientName: '',
                         phone: '',
@@ -480,11 +482,19 @@ export function Agenda({
                                         </label>
                                         <select
                                             value={selectedPatientId}
-                                            onChange={(e) =>
-                                                setSelectedPatientId(
-                                                    e.target.value,
-                                                )
-                                            }
+                                            onChange={(e) => {
+                                                const patientId = e.target.value;
+                                                setSelectedPatientId(patientId);
+                                                
+                                                // Auto-preencher telefone quando paciente for selecionado
+                                                const selectedPatient = pacientes.find(p => p.id === patientId);
+                                                if (selectedPatient) {
+                                                    setNewAppointment(prev => ({
+                                                        ...prev,
+                                                        phone: selectedPatient.phone || '',
+                                                    }));
+                                                }
+                                            }}
                                             className="w-full rounded-lg border px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
                                         >
                                             <option value="">
