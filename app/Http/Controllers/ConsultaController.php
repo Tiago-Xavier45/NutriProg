@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Consulta;
 use App\Models\Cliente;
+use App\Models\Consulta;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -71,10 +71,10 @@ class ConsultaController extends Controller
     {
         $consultaId = $request->route('consulta_id') ?? $request->route('consulta');
         $consulta = Consulta::find((int) $consultaId);
-        if (!$consulta) {
+        if (! $consulta) {
             return redirect()->back()->with('error', 'Consulta não encontrada');
         }
-        
+
         $validated = $request->validate([
             'cliente_id' => 'sometimes|exists:clientes,id',
             'data' => 'sometimes|date',
@@ -95,7 +95,7 @@ class ConsultaController extends Controller
     {
         $consultaId = $request->route('consulta_id') ?? $request->route('consulta');
         $consulta = Consulta::find((int) $consultaId);
-        if (!$consulta) {
+        if (! $consulta) {
             return redirect()->back()->with('error', 'Consulta não encontrada');
         }
         $consulta->delete();

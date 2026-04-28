@@ -16,7 +16,7 @@ class ClienteController extends Controller
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -62,10 +62,10 @@ class ClienteController extends Controller
     {
         $clienteId = $request->route('cliente_id') ?? $request->route('cliente');
         $cliente = Cliente::find((int) $clienteId);
-        if (!$cliente) {
+        if (! $cliente) {
             return redirect()->back()->with('error', 'Paciente não encontrado');
         }
-        
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
@@ -91,7 +91,7 @@ class ClienteController extends Controller
     {
         $clienteId = $request->route('cliente_id') ?? $request->route('cliente');
         $cliente = Cliente::find((int) $clienteId);
-        if (!$cliente) {
+        if (! $cliente) {
             return redirect()->back()->with('error', 'Paciente não encontrado');
         }
         $cliente->delete();

@@ -7,19 +7,19 @@ use App\Models\Consulta;
 use App\Models\PlanoAlimentar;
 use App\Models\Relatorio;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class RelatorioController extends Controller
 {
     public function index(Request $request)
     {
         $period = $request->get('period', 'mes');
-        
+
         $stats = $this->getStats($period);
         $pacientesPorMes = $this->getPacientesPorMes();
         $planosDistribution = $this->getPlanosDistribution();
-        
+
         $savedReports = Relatorio::orderBy('created_at', 'desc')->limit(10)->get()->map(function ($r) {
             return [
                 'id' => $r->id,
@@ -58,10 +58,11 @@ class RelatorioController extends Controller
     {
         $relatorioId = $request->route('relatorio_id') ?? $request->route('relatorio');
         $relatorio = Relatorio::find((int) $relatorioId);
-        if (!$relatorio) {
+        if (! $relatorio) {
             return redirect()->back()->with('error', 'Relatório não encontrado');
         }
         $relatorio->delete();
+
         return redirect()->back()->with('success', 'Relatório excluído!');
     }
 
@@ -116,19 +117,19 @@ class RelatorioController extends Controller
     private function getPacientesPorMes()
     {
         $months = [];
-        
+
         for ($i = 5; $i >= 0; $i--) {
             $date = now()->subMonths($i);
             $monthName = $date->format('M');
-            
+
             $pacientes = Cliente::whereYear('created_at', $date->year)
                 ->whereMonth('created_at', $date->month)
                 ->count();
-            
+
             $consultas = Consulta::whereYear('data', $date->year)
                 ->whereMonth('data', $date->month)
                 ->count();
-            
+
             $months[] = [
                 'month' => $monthName,
                 'pacientes' => $pacientes,

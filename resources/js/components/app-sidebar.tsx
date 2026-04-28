@@ -1,5 +1,11 @@
 import { Link, usePage } from '@inertiajs/react';
-import { LayoutGrid, Users, UtensilsCrossed, Calendar, FileText } from 'lucide-react';
+import {
+    LayoutGrid,
+    Users,
+    UtensilsCrossed,
+    Calendar,
+    FileText,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -27,7 +33,7 @@ export function AppSidebar() {
     const pacientesUrl = page.props.currentTeam
         ? pacientes(page.props.currentTeam.slug)
         : '/';
-        
+
     const planosUrl = page.props.currentTeam
         ? planos(page.props.currentTeam.slug)
         : '/';
@@ -39,7 +45,7 @@ export function AppSidebar() {
     const relatoriosUrl = page.props.currentTeam
         ? relatorios(page.props.currentTeam.slug)
         : '/';
-    
+
     const mainNavItems: NavItem[] = [
         {
             title: 'Dashboard',
