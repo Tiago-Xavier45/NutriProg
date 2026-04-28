@@ -50,12 +50,12 @@ export function Dashboard() {
                 description="Visão geral do seu consultório"
             />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {stats.map((stat) => {
                     const Icon = iconMap[stat.icon] || Users;
                     const color = colorMap[stat.color] || 'emerald';
                     const trend = trendMap[stat.changeType] || 'neutral';
-                    
+
                     return (
                         <StatCard
                             key={stat.name}
@@ -72,35 +72,39 @@ export function Dashboard() {
                 })}
             </div>
 
-            <ContentCard
-                showHeader={{ title: 'Últimos Pacientes' }}
-            >
+            <ContentCard showHeader={{ title: 'Últimos Pacientes' }}>
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                                     Paciente
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                                     Plano
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                                     Última Visita
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
                                     Status
                                 </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {recentPatients.map((patient) => (
-                                <tr key={patient.id} className="hover:bg-gray-50 transition-colors">
+                                <tr
+                                    key={patient.id}
+                                    className="transition-colors hover:bg-gray-50"
+                                >
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
-                                            <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                                                <span className="text-emerald-700 font-medium text-sm">
-                                                    {patient.name.split(' ').map(n => n[0]).join('')}
+                                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100">
+                                                <span className="text-sm font-medium text-emerald-700">
+                                                    {patient.name
+                                                        .split(' ')
+                                                        .map((n) => n[0])
+                                                        .join('')}
                                                 </span>
                                             </div>
                                             <span className="ml-3 text-sm font-medium text-gray-900">
@@ -108,18 +112,20 @@ export function Dashboard() {
                                             </span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                    <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
                                         {patient.plan}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
                                         {patient.lastVisit}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                            patient.status === 'Ativo'
-                                                ? 'bg-emerald-100 text-emerald-700'
-                                                : 'bg-yellow-100 text-yellow-700'
-                                        }`}>
+                                        <span
+                                            className={`rounded-full px-2 py-1 text-xs font-medium ${
+                                                patient.status === 'Ativo'
+                                                    ? 'bg-emerald-100 text-emerald-700'
+                                                    : 'bg-yellow-100 text-yellow-700'
+                                            }`}
+                                        >
                                             {patient.status}
                                         </span>
                                     </td>

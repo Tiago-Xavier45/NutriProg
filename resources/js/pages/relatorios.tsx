@@ -30,12 +30,18 @@ interface PageProps {
 }
 
 export default function RelatoriosPage() {
-    const { stats, pacientesPorMes, planosDistribution, savedReports, currentPeriod } = usePage<PageProps>().props;
+    const {
+        stats,
+        pacientesPorMes,
+        planosDistribution,
+        savedReports,
+        currentPeriod,
+    } = usePage<PageProps>().props;
 
     return (
         <>
             <Head title="Relatórios - NutriPro" />
-            <Reports 
+            <Reports
                 initialStats={stats}
                 initialPacientesPorMes={pacientesPorMes}
                 initialPlanosDistribution={planosDistribution}

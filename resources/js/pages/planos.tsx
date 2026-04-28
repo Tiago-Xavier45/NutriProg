@@ -26,15 +26,16 @@ interface PageProps {
             }>;
         }>;
     }>;
+    pacientes: Array<{ id: string; name: string }>;
 }
 
 export default function PlanosPage() {
-    const { planos } = usePage<PageProps>().props;
+    const { planos, pacientes } = usePage<PageProps>().props;
 
     return (
         <>
             <Head title="Planos Alimentares - NutriPro" />
-            <MealPlans initialPlans={planos} />
+            <MealPlans initialPlans={planos} pacientes={pacientes} />
         </>
     );
 }

@@ -22,8 +22,8 @@ class DashboardController extends Controller
                     'id' => $cliente->id,
                     'name' => $cliente->name,
                     'plan' => $cliente->plan ?? 'Sem plano',
-                    'lastVisit' => $cliente->last_visit 
-                        ? $cliente->last_visit->format('d/m/Y') 
+                    'lastVisit' => $cliente->last_visit
+                        ? $cliente->last_visit->format('d/m/Y')
                         : 'Nunca',
                     'status' => $cliente->status ?? 'Ativo',
                 ];

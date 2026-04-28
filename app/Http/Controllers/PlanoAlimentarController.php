@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Alimento;
 use App\Models\PlanoAlimentar;
 use App\Models\Refeicao;
-use App\Models\Alimento;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -18,9 +18,9 @@ class PlanoAlimentarController extends Controller
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('nome', 'like', "%{$search}%")
-                  ->orWhereHas('cliente', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('cliente', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -28,7 +28,7 @@ class PlanoAlimentarController extends Controller
             return [
                 'id' => $plano->id,
                 'patientId' => $plano->cliente_id,
-                'patientName' => $plano->cliente->name,
+                'patientName' => $plano->cliente ? $plano->cliente->name : 'Paciente não encontrado',
                 'planName' => $plano->nome,
                 'calories' => $plano->calorias,
                 'objective' => $plano->objetivo,
@@ -55,8 +55,16 @@ class PlanoAlimentarController extends Controller
             ];
         });
 
+        $pacientes = \App\Models\Cliente::orderBy('name')->get()->map(function ($cliente) {
+            return [
+                'id' => (string) $cliente->id,
+                'name' => $cliente->name,
+            ];
+        });
+
         return Inertia::render('planos', [
             'planos' => $planos,
+            'pacientes' => $pacientes,
         ]);
     }
 
@@ -101,7 +109,7 @@ class PlanoAlimentarController extends Controller
 
                 if (isset($meal['alimentos'])) {
                     foreach ($meal['alimentos'] as $alimento) {
-                        if (!empty($alimento['nome'])) {
+                        if (! empty($alimento['nome'])) {
                             Alimento::create([
                                 'refeicao_id' => $refeicao->id,
                                 'nome' => $alimento['nome'],
@@ -121,10 +129,10 @@ class PlanoAlimentarController extends Controller
     {
         $planoId = $request->route('plano_id') ?? $request->route('plano');
         $plano = PlanoAlimentar::find((int) $planoId);
-        if (!$plano) {
+        if (! $plano) {
             return redirect()->back()->with('error', 'Plano não encontrado');
         }
-        
+
         $validated = $request->validate([
             'cliente_id' => 'sometimes|exists:clientes,id',
             'nome' => 'sometimes|string|max:255',
@@ -151,7 +159,7 @@ class PlanoAlimentarController extends Controller
 
                 if (isset($meal['alimentos'])) {
                     foreach ($meal['alimentos'] as $alimento) {
-                        if (!empty($alimento['nome'])) {
+                        if (! empty($alimento['nome'])) {
                             Alimento::create([
                                 'refeicao_id' => $refeicao->id,
                                 'nome' => $alimento['nome'],
@@ -171,7 +179,7 @@ class PlanoAlimentarController extends Controller
     {
         $planoId = $request->route('plano_id') ?? $request->route('plano');
         $plano = PlanoAlimentar::find((int) $planoId);
-        if (!$plano) {
+        if (! $plano) {
             return redirect()->back()->with('error', 'Plano não encontrado');
         }
         $plano->delete();

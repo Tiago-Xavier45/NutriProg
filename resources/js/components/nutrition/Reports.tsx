@@ -1,5 +1,15 @@
 import { useState } from 'react';
-import { FileText, Download, Calendar, TrendingUp, Users, UtensilsCrossed, BarChart3, PieChart, Filter } from 'lucide-react';
+import {
+    FileText,
+    Download,
+    Calendar,
+    TrendingUp,
+    Users,
+    UtensilsCrossed,
+    BarChart3,
+    PieChart,
+    Filter,
+} from 'lucide-react';
 import { PageHeader, ContentCard } from '@/components/ui';
 import { router } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react';
@@ -20,8 +30,16 @@ interface ReportsProps {
         totalConsultas: number;
         totalPlanos: number;
     };
-    initialPacientesPorMes?: Array<{ month: string; pacientes: number; consultas: number }>;
-    initialPlanosDistribution?: Array<{ name: string; value: number; color: string }>;
+    initialPacientesPorMes?: Array<{
+        month: string;
+        pacientes: number;
+        consultas: number;
+    }>;
+    initialPlanosDistribution?: Array<{
+        name: string;
+        value: number;
+        color: string;
+    }>;
     initialSavedReports?: SavedReport[];
     initialCurrentPeriod?: string;
 }
@@ -54,12 +72,17 @@ const periodLabels: Record<string, string> = {
     ano: 'Este Ano',
 };
 
-export function Reports({ 
-    initialStats = { totalPacientes: 0, pacientesAtivos: 0, totalConsultas: 0, totalPlanos: 0 },
+export function Reports({
+    initialStats = {
+        totalPacientes: 0,
+        pacientesAtivos: 0,
+        totalConsultas: 0,
+        totalPlanos: 0,
+    },
     initialPacientesPorMes = [],
     initialPlanosDistribution = [],
     initialSavedReports = [],
-    initialCurrentPeriod = 'mes'
+    initialCurrentPeriod = 'mes',
 }: ReportsProps) {
     const [selectedPeriod, setSelectedPeriod] = useState(initialCurrentPeriod);
     const [selectedType, setSelectedType] = useState<string>('all');
@@ -71,45 +94,64 @@ export function Reports({
     });
 
     const page = usePage();
-    const baseUrl = page.props.currentTeam ? `/${page.props.currentTeam.slug}` : '';
+    const baseUrl = page.props.currentTeam
+        ? `/${page.props.currentTeam.slug}`
+        : '';
 
-    const filteredReports = selectedType === 'all' 
-        ? initialSavedReports 
-        : initialSavedReports.filter(r => r.type === selectedType);
+    const filteredReports =
+        selectedType === 'all'
+            ? initialSavedReports
+            : initialSavedReports.filter((r) => r.type === selectedType);
 
     const handlePeriodChange = (period: string) => {
         setSelectedPeriod(period);
-        router.get(`${baseUrl}/relatorios`, { period }, { preserveState: true });
+        router.get(
+            `${baseUrl}/relatorios`,
+            { period },
+            { preserveState: true },
+        );
     };
 
     const handleSaveReport = () => {
         if (!newReport.titulo) return;
-        
-        router.post(`${baseUrl}/relatorios`, {
-            titulo: newReport.titulo,
-            tipo: newReport.tipo,
-            periodo: periodLabels[selectedPeriod] || 'Este Mês',
-            dados: {
-                stats: initialStats,
-                pacientesPorMes: initialPacientesPorMes,
-                planosDistribution: initialPlanosDistribution,
+
+        router.post(
+            `${baseUrl}/relatorios`,
+            {
+                titulo: newReport.titulo,
+                tipo: newReport.tipo,
+                periodo: periodLabels[selectedPeriod] || 'Este Mês',
+                dados: {
+                    stats: initialStats,
+                    pacientesPorMes: initialPacientesPorMes,
+                    planosDistribution: initialPlanosDistribution,
+                },
             },
-        }, {
-            onSuccess: () => {
-                setShowSaveModal(false);
-                setNewReport({ titulo: '', tipo: 'pacientes', periodo: periodLabels[selectedPeriod] || 'Este Mês' });
-                window.location.reload();
+            {
+                onSuccess: () => {
+                    setShowSaveModal(false);
+                    setNewReport({
+                        titulo: '',
+                        tipo: 'pacientes',
+                        periodo: periodLabels[selectedPeriod] || 'Este Mês',
+                    });
+                    window.location.reload();
+                },
             },
-        });
+        );
     };
 
     const handleDeleteReport = (id: number) => {
         if (confirm('Excluir este relatório?')) {
-            router.post(`${baseUrl}/relatorios/${id}`, {
-                _method: 'DELETE',
-            }, {
-                onSuccess: () => window.location.reload(),
-            });
+            router.post(
+                `${baseUrl}/relatorios/${id}`,
+                {
+                    _method: 'DELETE',
+                },
+                {
+                    onSuccess: () => window.location.reload(),
+                },
+            );
         }
     };
 
@@ -117,8 +159,14 @@ export function Reports({
         alert(`Baixando relatório: ${report.title}`);
     };
 
-    const maxPacientes = Math.max(...initialPacientesPorMes.map(d => d.pacientes), 1);
-    const maxConsultas = Math.max(...initialPacientesPorMes.map(d => d.consultas), 1);
+    const maxPacientes = Math.max(
+        ...initialPacientesPorMes.map((d) => d.pacientes),
+        1,
+    );
+    const maxConsultas = Math.max(
+        ...initialPacientesPorMes.map((d) => d.consultas),
+        1,
+    );
 
     return (
         <div className="space-y-6">
@@ -127,121 +175,199 @@ export function Reports({
                 description="Análises e extrações de dados"
             />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2">
                     <ContentCard>
                         <div className="p-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-lg font-semibold text-gray-900">Estatísticas Gerais</h2>
+                            <div className="mb-6 flex items-center justify-between">
+                                <h2 className="text-lg font-semibold text-gray-900">
+                                    Estatísticas Gerais
+                                </h2>
                                 <div className="flex items-center gap-2">
-                                    <Filter className="w-4 h-4 text-gray-400" />
+                                    <Filter className="h-4 w-4 text-gray-400" />
                                     <select
                                         value={selectedPeriod}
-                                        onChange={(e) => handlePeriodChange(e.target.value)}
-                                        className="text-sm border rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-emerald-500 outline-none"
+                                        onChange={(e) =>
+                                            handlePeriodChange(e.target.value)
+                                        }
+                                        className="rounded-lg border px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
                                     >
-                                        {periodOptions.map(opt => (
-                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        {periodOptions.map((opt) => (
+                                            <option
+                                                key={opt.value}
+                                                value={opt.value}
+                                            >
+                                                {opt.label}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                                <div className="bg-blue-50 rounded-xl p-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Users className="w-5 h-5 text-blue-600" />
-                                        <span className="text-sm text-gray-600">Pacientes</span>
-                                    </div>
-                                    <p className="text-2xl font-bold text-gray-900">{initialStats.totalPacientes}</p>
-                                    <p className="text-xs text-emerald-600">{initialStats.pacientesAtivos} ativos</p>
-                                </div>
-                                <div className="bg-emerald-50 rounded-xl p-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <UtensilsCrossed className="w-5 h-5 text-emerald-600" />
-                                        <span className="text-sm text-gray-600">Planos Ativos</span>
-                                    </div>
-                                    <p className="text-2xl font-bold text-gray-900">{initialStats.totalPlanos}</p>
-                                    <p className="text-xs text-gray-500">planos creados</p>
-                                </div>
-                                <div className="bg-purple-50 rounded-xl p-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Calendar className="w-5 h-5 text-purple-600" />
-                                        <span className="text-sm text-gray-600">Consultas</span>
-                                    </div>
-                                    <p className="text-2xl font-bold text-gray-900">{initialStats.totalConsultas}</p>
-                                    <p className="text-xs text-gray-500">no período</p>
-                                </div>
-                                <div className="bg-orange-50 rounded-xl p-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <TrendingUp className="w-5 h-5 text-orange-600" />
-                                        <span className="text-sm text-gray-600">Taxa</span>
+                            <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+                                <div className="rounded-xl bg-blue-50 p-4">
+                                    <div className="mb-2 flex items-center gap-2">
+                                        <Users className="h-5 w-5 text-blue-600" />
+                                        <span className="text-sm text-gray-600">
+                                            Pacientes
+                                        </span>
                                     </div>
                                     <p className="text-2xl font-bold text-gray-900">
-                                        {initialStats.totalPacientes > 0 
-                                            ? Math.round((initialStats.pacientesAtivos / initialStats.totalPacientes) * 100)
-                                            : 0}%
+                                        {initialStats.totalPacientes}
                                     </p>
-                                    <p className="text-xs text-emerald-600">de adesão</p>
+                                    <p className="text-xs text-emerald-600">
+                                        {initialStats.pacientesAtivos} ativos
+                                    </p>
+                                </div>
+                                <div className="rounded-xl bg-emerald-50 p-4">
+                                    <div className="mb-2 flex items-center gap-2">
+                                        <UtensilsCrossed className="h-5 w-5 text-emerald-600" />
+                                        <span className="text-sm text-gray-600">
+                                            Planos Ativos
+                                        </span>
+                                    </div>
+                                    <p className="text-2xl font-bold text-gray-900">
+                                        {initialStats.totalPlanos}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        planos creados
+                                    </p>
+                                </div>
+                                <div className="rounded-xl bg-purple-50 p-4">
+                                    <div className="mb-2 flex items-center gap-2">
+                                        <Calendar className="h-5 w-5 text-purple-600" />
+                                        <span className="text-sm text-gray-600">
+                                            Consultas
+                                        </span>
+                                    </div>
+                                    <p className="text-2xl font-bold text-gray-900">
+                                        {initialStats.totalConsultas}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        no período
+                                    </p>
+                                </div>
+                                <div className="rounded-xl bg-orange-50 p-4">
+                                    <div className="mb-2 flex items-center gap-2">
+                                        <TrendingUp className="h-5 w-5 text-orange-600" />
+                                        <span className="text-sm text-gray-600">
+                                            Taxa
+                                        </span>
+                                    </div>
+                                    <p className="text-2xl font-bold text-gray-900">
+                                        {initialStats.totalPacientes > 0
+                                            ? Math.round(
+                                                  (initialStats.pacientesAtivos /
+                                                      initialStats.totalPacientes) *
+                                                      100,
+                                              )
+                                            : 0}
+                                        %
+                                    </p>
+                                    <p className="text-xs text-emerald-600">
+                                        de adesão
+                                    </p>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div>
-                                    <h3 className="text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
-                                        <BarChart3 className="w-4 h-4" />
+                                    <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-gray-700">
+                                        <BarChart3 className="h-4 w-4" />
                                         Pacientes e Consultas
                                     </h3>
                                     <div className="space-y-3">
                                         {initialPacientesPorMes.map((data) => (
-                                            <div key={data.month} className="flex items-center gap-4">
-                                                <span className="w-8 text-sm text-gray-500">{data.month}</span>
-                                                <div className="flex-1 flex gap-2">
-                                                    <div className="flex-1 bg-blue-500 rounded-full h-6 flex items-center justify-end pr-2" style={{ width: `${(data.pacientes / maxPacientes) * 100}%`, minWidth: '40px' }}>
-                                                        <span className="text-xs text-white font-medium">{data.pacientes}</span>
+                                            <div
+                                                key={data.month}
+                                                className="flex items-center gap-4"
+                                            >
+                                                <span className="w-8 text-sm text-gray-500">
+                                                    {data.month}
+                                                </span>
+                                                <div className="flex flex-1 gap-2">
+                                                    <div
+                                                        className="flex h-6 flex-1 items-center justify-end rounded-full bg-blue-500 pr-2"
+                                                        style={{
+                                                            width: `${(data.pacientes / maxPacientes) * 100}%`,
+                                                            minWidth: '40px',
+                                                        }}
+                                                    >
+                                                        <span className="text-xs font-medium text-white">
+                                                            {data.pacientes}
+                                                        </span>
                                                     </div>
-                                                    <div className="flex-1 bg-emerald-500 rounded-full h-6 flex items-center justify-end pr-2" style={{ width: `${(data.consultas / maxConsultas) * 100}%`, minWidth: '40px' }}>
-                                                        <span className="text-xs text-white font-medium">{data.consultas}</span>
+                                                    <div
+                                                        className="flex h-6 flex-1 items-center justify-end rounded-full bg-emerald-500 pr-2"
+                                                        style={{
+                                                            width: `${(data.consultas / maxConsultas) * 100}%`,
+                                                            minWidth: '40px',
+                                                        }}
+                                                    >
+                                                        <span className="text-xs font-medium text-white">
+                                                            {data.consultas}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
-                                    <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+                                    <div className="mt-3 flex items-center gap-4 text-xs text-gray-500">
                                         <span className="flex items-center gap-1">
-                                            <span className="w-3 h-3 rounded-full bg-blue-500" />
+                                            <span className="h-3 w-3 rounded-full bg-blue-500" />
                                             Pacientes
                                         </span>
                                         <span className="flex items-center gap-1">
-                                            <span className="w-3 h-3 rounded-full bg-emerald-500" />
+                                            <span className="h-3 w-3 rounded-full bg-emerald-500" />
                                             Consultas
                                         </span>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <h3 className="text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
-                                        <PieChart className="w-4 h-4" />
+                                    <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-gray-700">
+                                        <PieChart className="h-4 w-4" />
                                         Distribuição de Planos
                                     </h3>
                                     {initialPlanosDistribution.length > 0 ? (
                                         <div className="space-y-2">
-                                            {initialPlanosDistribution.map((plan) => (
-                                                <div key={plan.name} className="flex items-center gap-3">
-                                                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: plan.color }} />
-                                                    <span className="flex-1 text-sm text-gray-600">{plan.name}</span>
-                                                    <span className="text-sm font-medium text-gray-900">{plan.value}%</span>
-                                                    <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
-                                                        <div 
-                                                            className="h-full rounded-full" 
-                                                            style={{ width: `${plan.value}%`, backgroundColor: plan.color }}
+                                            {initialPlanosDistribution.map(
+                                                (plan) => (
+                                                    <div
+                                                        key={plan.name}
+                                                        className="flex items-center gap-3"
+                                                    >
+                                                        <div
+                                                            className="h-3 w-3 rounded-full"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    plan.color,
+                                                            }}
                                                         />
+                                                        <span className="flex-1 text-sm text-gray-600">
+                                                            {plan.name}
+                                                        </span>
+                                                        <span className="text-sm font-medium text-gray-900">
+                                                            {plan.value}%
+                                                        </span>
+                                                        <div className="h-2 w-24 overflow-hidden rounded-full bg-gray-100">
+                                                            <div
+                                                                className="h-full rounded-full"
+                                                                style={{
+                                                                    width: `${plan.value}%`,
+                                                                    backgroundColor:
+                                                                        plan.color,
+                                                                }}
+                                                            />
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                ),
+                                            )}
                                         </div>
                                     ) : (
-                                        <p className="text-sm text-gray-500">Nenhum plano cadastrado</p>
+                                        <p className="text-sm text-gray-500">
+                                            Nenhum plano cadastrado
+                                        </p>
                                     )}
                                 </div>
                             </div>
@@ -251,12 +377,16 @@ export function Reports({
 
                 <ContentCard>
                     <div className="p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-semibold text-gray-900">Relatórios Salvos</h2>
+                        <div className="mb-4 flex items-center justify-between">
+                            <h2 className="text-lg font-semibold text-gray-900">
+                                Relatórios Salvos
+                            </h2>
                             <select
                                 value={selectedType}
-                                onChange={(e) => setSelectedType(e.target.value)}
-                                className="text-sm border rounded-lg px-2 py-1 focus:ring-2 focus:ring-emerald-500 outline-none"
+                                onChange={(e) =>
+                                    setSelectedType(e.target.value)
+                                }
+                                className="rounded-lg border px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
                             >
                                 <option value="all">Todos</option>
                                 <option value="pacientes">Pacientes</option>
@@ -269,46 +399,63 @@ export function Reports({
                         <div className="space-y-3">
                             {filteredReports.length > 0 ? (
                                 filteredReports.map((report) => {
-                                    const Icon = reportTypeIcons[report.type] || FileText;
+                                    const Icon =
+                                        reportTypeIcons[report.type] ||
+                                        FileText;
                                     return (
                                         <div
                                             key={report.id}
-                                            className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                                            className="flex items-center gap-3 rounded-lg bg-gray-50 p-3 transition-colors hover:bg-gray-100"
                                         >
-                                            <div className={`p-2 rounded-lg ${reportTypeColors[report.type] || 'bg-gray-100 text-gray-600'}`}>
-                                                <Icon className="w-4 h-4" />
+                                            <div
+                                                className={`rounded-lg p-2 ${reportTypeColors[report.type] || 'bg-gray-100 text-gray-600'}`}
+                                            >
+                                                <Icon className="h-4 w-4" />
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-gray-900 truncate">{report.title}</p>
-                                                <p className="text-xs text-gray-500">{report.period} • {report.generatedAt}</p>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="truncate text-sm font-medium text-gray-900">
+                                                    {report.title}
+                                                </p>
+                                                <p className="text-xs text-gray-500">
+                                                    {report.period} •{' '}
+                                                    {report.generatedAt}
+                                                </p>
                                             </div>
                                             <button
-                                                onClick={() => handleDownload(report)}
-                                                className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                                onClick={() =>
+                                                    handleDownload(report)
+                                                }
+                                                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600"
                                                 title="Baixar"
                                             >
-                                                <Download className="w-4 h-4" />
+                                                <Download className="h-4 w-4" />
                                             </button>
                                             <button
-                                                onClick={() => handleDeleteReport(report.id)}
-                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                onClick={() =>
+                                                    handleDeleteReport(
+                                                        report.id,
+                                                    )
+                                                }
+                                                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600"
                                                 title="Excluir"
                                             >
-                                                <FileText className="w-4 h-4" />
+                                                <FileText className="h-4 w-4" />
                                             </button>
                                         </div>
                                     );
                                 })
                             ) : (
-                                <p className="text-sm text-gray-500 text-center py-4">Nenhum relatório salvo</p>
+                                <p className="py-4 text-center text-sm text-gray-500">
+                                    Nenhum relatório salvo
+                                </p>
                             )}
                         </div>
 
-                        <button 
+                        <button
                             onClick={() => setShowSaveModal(true)}
-                            className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-emerald-500 hover:text-emerald-600 transition-colors"
+                            className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-2 text-gray-500 transition-colors hover:border-emerald-500 hover:text-emerald-600"
                         >
-                            <FileText className="w-4 h-4" />
+                            <FileText className="h-4 w-4" />
                             Salvar Relatório Atual
                         </button>
                     </div>
@@ -316,57 +463,83 @@ export function Reports({
             </div>
 
             {showSaveModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-xl w-full max-w-md">
-                        <div className="p-6 border-b">
-                            <h2 className="text-xl font-semibold">Salvar Relatório</h2>
-                            <p className="text-sm text-gray-500">Salve as estatísticas atuais para referência futura</p>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-md rounded-xl bg-white">
+                        <div className="border-b p-6">
+                            <h2 className="text-xl font-semibold">
+                                Salvar Relatório
+                            </h2>
+                            <p className="text-sm text-gray-500">
+                                Salve as estatísticas atuais para referência
+                                futura
+                            </p>
                         </div>
-                        <div className="p-6 space-y-4">
+                        <div className="space-y-4 p-6">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
+                                <label className="mb-1 block text-sm font-medium text-gray-700">
+                                    Título
+                                </label>
                                 <input
                                     type="text"
                                     value={newReport.titulo}
-                                    onChange={(e) => setNewReport({...newReport, titulo: e.target.value})}
+                                    onChange={(e) =>
+                                        setNewReport({
+                                            ...newReport,
+                                            titulo: e.target.value,
+                                        })
+                                    }
                                     placeholder="Ex: Relatório Mensal Abril"
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                                    className="w-full rounded-lg border px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                                <label className="mb-1 block text-sm font-medium text-gray-700">
+                                    Tipo
+                                </label>
                                 <select
                                     value={newReport.tipo}
-                                    onChange={(e) => setNewReport({...newReport, tipo: e.target.value})}
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                                    onChange={(e) =>
+                                        setNewReport({
+                                            ...newReport,
+                                            tipo: e.target.value,
+                                        })
+                                    }
+                                    className="w-full rounded-lg border px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
                                 >
                                     <option value="pacientes">Pacientes</option>
-                                    <option value="financeiro">Financeiro</option>
+                                    <option value="financeiro">
+                                        Financeiro
+                                    </option>
                                     <option value="planos">Planos</option>
                                     <option value="consultas">Consultas</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Período</label>
+                                <label className="mb-1 block text-sm font-medium text-gray-700">
+                                    Período
+                                </label>
                                 <input
                                     type="text"
-                                    value={periodLabels[selectedPeriod] || 'Este Mês'}
+                                    value={
+                                        periodLabels[selectedPeriod] ||
+                                        'Este Mês'
+                                    }
                                     disabled
-                                    className="w-full px-4 py-2 border rounded-lg bg-gray-50 text-gray-500"
+                                    className="w-full rounded-lg border bg-gray-50 px-4 py-2 text-gray-500"
                                 />
                             </div>
                         </div>
-                        <div className="flex gap-3 p-6 border-t">
+                        <div className="flex gap-3 border-t p-6">
                             <button
                                 onClick={() => setShowSaveModal(false)}
-                                className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+                                className="flex-1 rounded-lg border px-4 py-2 hover:bg-gray-50"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={handleSaveReport}
                                 disabled={!newReport.titulo}
-                                className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                                className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700 disabled:opacity-50"
                             >
                                 Salvar
                             </button>

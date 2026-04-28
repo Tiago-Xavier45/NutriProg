@@ -16,7 +16,7 @@ export function PageHeader({ title, description, count, action }: PageHeaderProp
     const ActionIcon = action?.icon || Plus;
 
     return (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 px-6 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 px-6">
             <div>
                 <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
                 <div className="flex items-center gap-2 mt-1">

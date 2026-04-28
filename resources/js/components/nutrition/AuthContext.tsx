@@ -27,8 +27,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
 
     const login = async (email: string, password: string): Promise<boolean> => {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
+        await new Promise((resolve) => setTimeout(resolve, 800));
+
         if (email && password.length >= 4) {
             setUser(MOCK_USER);
             return true;

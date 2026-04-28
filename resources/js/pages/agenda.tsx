@@ -19,12 +19,13 @@ interface PageProps {
 }
 
 export default function AgendaPage() {
-    const { consultas, currentMonth, currentYear, pacientes } = usePage<PageProps>().props;
+    const { consultas, currentMonth, currentYear, pacientes } =
+        usePage<PageProps>().props;
 
     return (
         <>
             <Head title="Agenda - NutriPro" />
-            <Agenda 
+            <Agenda
                 initialAppointments={consultas}
                 initialMonth={currentMonth}
                 initialYear={currentYear}

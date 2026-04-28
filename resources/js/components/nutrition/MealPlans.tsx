@@ -1,5 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, Edit2, Trash2, Copy, Calendar, Clock, UtensilsCrossed, X, Save, AlertCircle, Check } from 'lucide-react';
+import {
+    Search,
+    Plus,
+    Edit2,
+    Trash2,
+    Copy,
+    Calendar,
+    Clock,
+    UtensilsCrossed,
+    X,
+    Save,
+    AlertCircle,
+    Check,
+} from 'lucide-react';
 import { usePage, router } from '@inertiajs/react';
 import { PageHeader, ContentCard } from '@/components/ui';
 
@@ -34,6 +47,7 @@ interface MealPlan {
 
 interface MealPlansProps {
     initialPlans?: MealPlan[];
+    pacientes?: Array<{ id: string; name: string }>;
 }
 
 const OBJECTIVES = [
@@ -66,8 +80,22 @@ const DEFAULT_MEALS = [
 ];
 
 const MEAL_TIMES = [
-    '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
-    '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00',
+    '06:00',
+    '07:00',
+    '08:00',
+    '09:00',
+    '10:00',
+    '11:00',
+    '12:00',
+    '13:00',
+    '14:00',
+    '15:00',
+    '16:00',
+    '17:00',
+    '18:00',
+    '19:00',
+    '20:00',
+    '21:00',
 ];
 
 const generateId = () => Math.random().toString(36).substring(2, 15);
@@ -82,36 +110,56 @@ const initialFormState = {
     status: 'ativo' as const,
     notes: '',
     meals: [
-        { id: generateId(), nome: 'Café da Manhã', horario: '07:00', foods: [] as Food[] },
-        { id: generateId(), nome: 'Almoço', horario: '12:30', foods: [] as Food[] },
-        { id: generateId(), nome: 'Jantar', horario: '19:00', foods: [] as Food[] },
+        {
+            id: generateId(),
+            nome: 'Café da Manhã',
+            horario: '07:00',
+            foods: [] as Food[],
+        },
+        {
+            id: generateId(),
+            nome: 'Almoço',
+            horario: '12:30',
+            foods: [] as Food[],
+        },
+        {
+            id: generateId(),
+            nome: 'Jantar',
+            horario: '19:00',
+            foods: [] as Food[],
+        },
     ] as Meal[],
 };
 
-export function MealPlans({ initialPlans = [] }: MealPlansProps) {
+export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps) {
     const [plans, setPlans] = useState<MealPlan[]>(initialPlans);
     const [searchTerm, setSearchTerm] = useState('');
     const [showFormModal, setShowFormModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [editingPlan, setEditingPlan] = useState<MealPlan | null>(null);
     const [selectedPlan, setSelectedPlan] = useState<MealPlan | null>(null);
+    const [selectedPatientId, setSelectedPatientId] = useState<string>('');
     const [formData, setFormData] = useState(initialFormState);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     const page = usePage();
-    const baseUrl = page.props.currentTeam ? `/${page.props.currentTeam.slug}` : '';
+    const baseUrl = page.props.currentTeam
+        ? `/${page.props.currentTeam.slug}`
+        : '';
 
     useEffect(() => {
         setPlans(initialPlans);
     }, [initialPlans]);
 
-    const filteredPlans = plans.filter((plan) =>
-        plan.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        plan.planName.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredPlans = plans.filter(
+        (plan) =>
+            plan.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            plan.planName.toLowerCase().includes(searchTerm.toLowerCase()),
     );
 
     const handleOpenCreate = () => {
         setEditingPlan(null);
+        setSelectedPatientId('');
         setFormData(initialFormState);
         setErrors({});
         setShowFormModal(true);
@@ -120,6 +168,7 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
     const handleOpenEdit = (plan: MealPlan, e: React.MouseEvent) => {
         e.stopPropagation();
         setEditingPlan(plan);
+        setSelectedPatientId(plan.patientId);
         setFormData({
             cliente_id: parseInt(plan.patientId) || 0,
             patientName: plan.patientName,
@@ -129,11 +178,11 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
             restrictions: [...plan.restrictions],
             status: plan.status,
             notes: plan.notes,
-            meals: plan.meals.map(m => ({
+            meals: plan.meals.map((m) => ({
                 id: m.id || generateId(),
                 nome: m.name,
                 horario: m.time,
-                foods: m.foods.map(f => ({
+                foods: m.foods.map((f) => ({
                     id: f.id || generateId(),
                     name: f.name,
                     portion: f.portion,
@@ -152,14 +201,14 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
 
     const validateForm = (): boolean => {
         const newErrors: Record<string, string> = {};
-        
-        if (!formData.patientName.trim()) newErrors.patientName = 'Nome do paciente é obrigatório';
-        if (!formData.planName.trim()) newErrors.planName = 'Nome do plano é obrigatório';
-        if (formData.calories < 500 || formData.calories > 5000) newErrors.calories = 'Calorias deve ser entre 500 e 5000';
-        
-        const hasFoods = formData.meals.some(m => m.foods.length > 0);
-        if (!hasFoods) newErrors.meals = 'Adicione pelo menos um alimento a alguma refeição';
-        
+
+        if (!selectedPatientId)
+            newErrors.patientId = 'Selecione um paciente';
+        if (!formData.planName.trim())
+            newErrors.planName = 'Nome do plano é obrigatório';
+        if (formData.calories < 500 || formData.calories > 5000)
+            newErrors.calories = 'Calorias deve ser entre 500 e 5000';
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -167,11 +216,12 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
     const handleSave = () => {
         if (!validateForm()) return;
 
+        const selectedPatient = pacientes.find(p => p.id === selectedPatientId);
         const mealsData = formData.meals.map((m, index) => ({
             nome: m.nome,
             horario: m.horario,
             ordem: index,
-            alimentos: m.foods.map(f => ({
+            alimentos: m.foods.map((f) => ({
                 nome: f.name,
                 porcao: f.portion,
                 calorias: f.calories,
@@ -179,7 +229,7 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
         }));
 
         const data = {
-            cliente_id: formData.cliente_id || 1,
+            cliente_id: parseInt(selectedPatientId),
             nome: formData.planName,
             calorias: formData.calories,
             objetivo: formData.objective,
@@ -190,10 +240,7 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
         };
 
         if (editingPlan) {
-            router.post(`${baseUrl}/planos/${editingPlan.id}`, {
-                _method: 'PUT',
-                ...data,
-            }, {
+            router.put(`${baseUrl}/planos/${editingPlan.id}`, data, {
                 onSuccess: () => {
                     window.location.reload();
                 },
@@ -210,11 +257,9 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
     const handleDelete = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
         if (confirm('Tem certeza que deseja excluir este plano?')) {
-            router.post(`${baseUrl}/planos/${id}`, {
-                _method: 'DELETE',
-            }, {
+            router.delete(`${baseUrl}/planos/${id}`, {
                 onSuccess: () => {
-                    setPlans(plans.filter(p => p.id !== id));
+                    setPlans(plans.filter((p) => p.id !== id));
                 },
             });
         }
@@ -223,7 +268,10 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
     const handleAddMeal = () => {
         setFormData({
             ...formData,
-            meals: [...formData.meals, { id: generateId(), nome: '', horario: '12:00', foods: [] }],
+            meals: [
+                ...formData.meals,
+                { id: generateId(), nome: '', horario: '12:00', foods: [] },
+            ],
         });
     };
 
@@ -231,15 +279,19 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
         if (formData.meals.length <= 1) return;
         setFormData({
             ...formData,
-            meals: formData.meals.filter(m => m.id !== mealId),
+            meals: formData.meals.filter((m) => m.id !== mealId),
         });
     };
 
-    const handleUpdateMeal = (mealId: string, field: 'nome' | 'horario', value: string) => {
+    const handleUpdateMeal = (
+        mealId: string,
+        field: 'nome' | 'horario',
+        value: string,
+    ) => {
         setFormData({
             ...formData,
-            meals: formData.meals.map(m =>
-                m.id === mealId ? { ...m, [field]: value } : m
+            meals: formData.meals.map((m) =>
+                m.id === mealId ? { ...m, [field]: value } : m,
             ),
         });
     };
@@ -247,22 +299,42 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
     const handleAddFood = (mealId: string) => {
         setFormData({
             ...formData,
-            meals: formData.meals.map(m =>
-                m.id === mealId ? { ...m, foods: [...m.foods, { id: generateId(), name: '', portion: '', calories: 0 }] } : m
+            meals: formData.meals.map((m) =>
+                m.id === mealId
+                    ? {
+                          ...m,
+                          foods: [
+                              ...m.foods,
+                              {
+                                  id: generateId(),
+                                  name: '',
+                                  portion: '',
+                                  calories: 0,
+                              },
+                          ],
+                      }
+                    : m,
             ),
         });
     };
 
-    const handleUpdateFood = (mealId: string, foodId: string, field: keyof Food, value: string | number) => {
+    const handleUpdateFood = (
+        mealId: string,
+        foodId: string,
+        field: keyof Food,
+        value: string | number,
+    ) => {
         setFormData({
             ...formData,
-            meals: formData.meals.map(m =>
-                m.id === mealId ? {
-                    ...m,
-                    foods: m.foods.map(f =>
-                        f.id === foodId ? { ...f, [field]: value } : f
-                    ),
-                } : m
+            meals: formData.meals.map((m) =>
+                m.id === mealId
+                    ? {
+                          ...m,
+                          foods: m.foods.map((f) =>
+                              f.id === foodId ? { ...f, [field]: value } : f,
+                          ),
+                      }
+                    : m,
             ),
         });
     };
@@ -270,11 +342,13 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
     const handleRemoveFood = (mealId: string, foodId: string) => {
         setFormData({
             ...formData,
-            meals: formData.meals.map(m =>
-                m.id === mealId ? {
-                    ...m,
-                    foods: m.foods.filter(f => f.id !== foodId),
-                } : m
+            meals: formData.meals.map((m) =>
+                m.id === mealId
+                    ? {
+                          ...m,
+                          foods: m.foods.filter((f) => f.id !== foodId),
+                      }
+                    : m,
             ),
         });
     };
@@ -283,7 +357,7 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
         setFormData({
             ...formData,
             restrictions: formData.restrictions.includes(restriction)
-                ? formData.restrictions.filter(r => r !== restriction)
+                ? formData.restrictions.filter((r) => r !== restriction)
                 : [...formData.restrictions, restriction],
         });
     };
@@ -307,59 +381,79 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
                     onChange: setSearchTerm,
                 }}
             >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+                <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2 lg:grid-cols-3">
                     {filteredPlans.map((plan) => (
                         <div
                             key={plan.id}
                             onClick={() => handleViewDetail(plan)}
-                            className="bg-gray-50 rounded-xl p-5 hover:bg-gray-100 transition-all cursor-pointer border border-transparent hover:border-emerald-200"
+                            className="cursor-pointer rounded-xl border border-transparent bg-gray-50 p-5 transition-all hover:border-emerald-200 hover:bg-gray-100"
                         >
-                            <div className="flex items-start justify-between mb-4">
+                            <div className="mb-4 flex items-start justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
-                                        <UtensilsCrossed className="w-6 h-6 text-emerald-600" />
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
+                                        <UtensilsCrossed className="h-6 w-6 text-emerald-600" />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-gray-900">{plan.planName}</h3>
-                                        <p className="text-sm text-gray-500">{plan.patientName}</p>
+                                        <h3 className="font-semibold text-gray-900">
+                                            {plan.planName}
+                                        </h3>
+                                        <p className="text-sm text-gray-500">
+                                            {plan.patientName}
+                                        </p>
                                     </div>
                                 </div>
-                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                    plan.status === 'ativo' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-600'
-                                }`}>
+                                <span
+                                    className={`rounded-full px-2 py-1 text-xs font-medium ${
+                                        plan.status === 'ativo'
+                                            ? 'bg-emerald-100 text-emerald-700'
+                                            : 'bg-gray-200 text-gray-600'
+                                    }`}
+                                >
                                     {plan.status}
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-3 mb-4">
+                            <div className="mb-4 grid grid-cols-3 gap-3">
                                 <div className="text-center">
-                                    <p className="text-lg font-bold text-gray-900">{plan.calories}</p>
-                                    <p className="text-xs text-gray-500">kcal</p>
+                                    <p className="text-lg font-bold text-gray-900">
+                                        {plan.calories}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        kcal
+                                    </p>
                                 </div>
                                 <div className="text-center">
-                                    <p className="text-lg font-bold text-gray-900">{plan.meals.length}</p>
-                                    <p className="text-xs text-gray-500">refeições</p>
+                                    <p className="text-lg font-bold text-gray-900">
+                                        {plan.meals.length}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        refeições
+                                    </p>
                                 </div>
                                 <div className="text-center">
-                                    <p className="text-sm font-bold text-emerald-600">{plan.updatedAt}</p>
-                                    <p className="text-xs text-gray-500">atualizado</p>
+                                    <p className="text-sm font-bold text-emerald-600">
+                                        {plan.updatedAt}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        atualizado
+                                    </p>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={(e) => handleOpenEdit(plan, e)}
-                                    className="flex-1 px-3 py-2 text-sm bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
+                                    className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
                                 >
-                                    <Edit2 className="w-4 h-4" />
+                                    <Edit2 className="h-4 w-4" />
                                     Editar
                                 </button>
                                 <button
                                     onClick={(e) => handleDelete(plan.id, e)}
-                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                    className="rounded-lg p-2 text-red-500 transition-colors hover:bg-red-50"
                                     title="Excluir"
                                 >
-                                    <Trash2 className="w-4 h-4" />
+                                    <Trash2 className="h-4 w-4" />
                                 </button>
                             </div>
                         </div>
@@ -368,9 +462,12 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
 
                 {filteredPlans.length === 0 && (
                     <div className="p-8 text-center text-gray-500">
-                        <UtensilsCrossed className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <UtensilsCrossed className="mx-auto mb-3 h-12 w-12 text-gray-300" />
                         <p>Nenhum plano alimentar encontrado</p>
-                        <button onClick={handleOpenCreate} className="mt-3 text-emerald-600 hover:underline">
+                        <button
+                            onClick={handleOpenCreate}
+                            className="mt-3 text-emerald-600 hover:underline"
+                        >
                             Criar primeiro plano
                         </button>
                     </div>
@@ -378,79 +475,132 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
             </ContentCard>
 
             {showFormModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-xl w-full max-w-4xl max-h-[95vh] overflow-y-auto">
-                        <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white z-10">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="max-h-[95vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-white">
+                        <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white p-6">
                             <div>
                                 <h2 className="text-xl font-semibold">
-                                    {editingPlan ? 'Editar Plano Alimentar' : 'Novo Plano Alimentar'}
+                                    {editingPlan
+                                        ? 'Editar Plano Alimentar'
+                                        : 'Novo Plano Alimentar'}
                                 </h2>
-                                <p className="text-gray-500 text-sm">
-                                    {editingPlan ? `Editando: ${editingPlan.planName}` : 'Preencha os dados do plano'}
+                                <p className="text-sm text-gray-500">
+                                    {editingPlan
+                                        ? `Editando: ${editingPlan.planName}`
+                                        : 'Preencha os dados do plano'}
                                 </p>
                             </div>
-                            <button onClick={() => setShowFormModal(false)} className="text-gray-400 hover:text-gray-600">
-                                <X className="w-6 h-6" />
+                            <button
+                                onClick={() => setShowFormModal(false)}
+                                className="text-gray-400 hover:text-gray-600"
+                            >
+                                <X className="h-6 w-6" />
                             </button>
                         </div>
 
-                        <div className="p-6 space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-6 p-6">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Paciente *</label>
-                                    <input
-                                        type="text"
-                                        value={formData.patientName}
-                                        onChange={(e) => setFormData({ ...formData, patientName: e.target.value })}
-                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none ${
-                                            errors.patientName ? 'border-red-500' : ''
+                                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                                        Paciente *
+                                    </label>
+                                    <select
+                                        value={selectedPatientId}
+                                        onChange={(e) => setSelectedPatientId(e.target.value)}
+                                        className={`w-full rounded-lg border px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500 ${
+                                            errors.patientId
+                                                ? 'border-red-500'
+                                                : ''
                                         }`}
-                                    />
+                                    >
+                                        <option value="">Selecione um paciente</option>
+                                        {pacientes.map(p => (
+                                            <option key={p.id} value={p.id}>{p.name}</option>
+                                        ))}
+                                    </select>
+                                    {errors.patientId && (
+                                        <p className="mt-1 text-sm text-red-500">{errors.patientId}</p>
+                                    )}
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Plano *</label>
+                                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                                        Nome do Plano *
+                                    </label>
                                     <input
                                         type="text"
                                         value={formData.planName}
-                                        onChange={(e) => setFormData({ ...formData, planName: e.target.value })}
-                                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none ${
-                                            errors.planName ? 'border-red-500' : ''
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                planName: e.target.value,
+                                            })
+                                        }
+                                        className={`w-full rounded-lg border px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500 ${
+                                            errors.planName
+                                                ? 'border-red-500'
+                                                : ''
                                         }`}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Calorias (kcal) *</label>
+                                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                                        Calorias (kcal) *
+                                    </label>
                                     <input
                                         type="number"
                                         value={formData.calories}
-                                        onChange={(e) => setFormData({ ...formData, calories: Number(e.target.value) })}
-                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                calories: Number(
+                                                    e.target.value,
+                                                ),
+                                            })
+                                        }
+                                        className="w-full rounded-lg border px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Objetivo</label>
+                                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                                        Objetivo
+                                    </label>
                                     <select
                                         value={formData.objective}
-                                        onChange={(e) => setFormData({ ...formData, objective: e.target.value })}
-                                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                objective: e.target.value,
+                                            })
+                                        }
+                                        className="w-full rounded-lg border px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
                                     >
-                                        {OBJECTIVES.map(obj => (
-                                            <option key={obj} value={obj}>{obj}</option>
+                                        {OBJECTIVES.map((obj) => (
+                                            <option key={obj} value={obj}>
+                                                {obj}
+                                            </option>
                                         ))}
                                     </select>
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Restrições</label>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                                        Restrições
+                                    </label>
                                     <div className="flex flex-wrap gap-2">
-                                        {RESTRICTIONS.map(restriction => (
+                                        {RESTRICTIONS.map((restriction) => (
                                             <button
                                                 key={restriction}
                                                 type="button"
-                                                onClick={() => toggleRestriction(restriction)}
-                                                className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
-                                                    formData.restrictions.includes(restriction)
-                                                        ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
-                                                        : 'bg-white border-gray-200 text-gray-600 hover:border-emerald-300'
+                                                onClick={() =>
+                                                    toggleRestriction(
+                                                        restriction,
+                                                    )
+                                                }
+                                                className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                                                    formData.restrictions.includes(
+                                                        restriction,
+                                                    )
+                                                        ? 'border-emerald-300 bg-emerald-100 text-emerald-700'
+                                                        : 'border-gray-200 bg-white text-gray-600 hover:border-emerald-300'
                                                 }`}
                                             >
                                                 {restriction}
@@ -461,79 +611,172 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
                             </div>
 
                             <div>
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="font-semibold text-gray-900">Refeições</h3>
-                                    <button type="button" onClick={handleAddMeal} className="flex items-center gap-1 text-sm text-emerald-600">
-                                        <Plus className="w-4 h-4" /> Adicionar Refeição
+                                <div className="mb-4 flex items-center justify-between">
+                                    <h3 className="font-semibold text-gray-900">
+                                        Refeições
+                                    </h3>
+                                    <button
+                                        type="button"
+                                        onClick={handleAddMeal}
+                                        className="flex items-center gap-1 text-sm text-emerald-600"
+                                    >
+                                        <Plus className="h-4 w-4" /> Adicionar
+                                        Refeição
                                     </button>
                                 </div>
 
                                 <div className="space-y-4">
                                     {formData.meals.map((meal) => (
-                                        <div key={meal.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                                            <div className="flex items-center gap-4 mb-4">
+                                        <div
+                                            key={meal.id}
+                                            className="rounded-lg border border-gray-200 bg-gray-50 p-4"
+                                        >
+                                            <div className="mb-4 flex items-center gap-4">
                                                 <div className="flex-1">
                                                     <select
                                                         value={meal.nome}
-                                                        onChange={(e) => handleUpdateMeal(meal.id, 'nome', e.target.value)}
-                                                        className="w-full px-3 py-2 border rounded-lg"
+                                                        onChange={(e) =>
+                                                            handleUpdateMeal(
+                                                                meal.id,
+                                                                'nome',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className="w-full rounded-lg border px-3 py-2"
                                                     >
-                                                        <option value="">Selecione</option>
-                                                        {DEFAULT_MEALS.map(name => (
-                                                            <option key={name} value={name}>{name}</option>
-                                                        ))}
+                                                        <option value="">
+                                                            Selecione
+                                                        </option>
+                                                        {DEFAULT_MEALS.map(
+                                                            (name) => (
+                                                                <option
+                                                                    key={name}
+                                                                    value={name}
+                                                                >
+                                                                    {name}
+                                                                </option>
+                                                            ),
+                                                        )}
                                                     </select>
                                                 </div>
                                                 <div className="w-24">
                                                     <select
                                                         value={meal.horario}
-                                                        onChange={(e) => handleUpdateMeal(meal.id, 'horario', e.target.value)}
-                                                        className="w-full px-3 py-2 border rounded-lg"
+                                                        onChange={(e) =>
+                                                            handleUpdateMeal(
+                                                                meal.id,
+                                                                'horario',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className="w-full rounded-lg border px-3 py-2"
                                                     >
-                                                        {MEAL_TIMES.map(time => (
-                                                            <option key={time} value={time}>{time}</option>
-                                                        ))}
+                                                        {MEAL_TIMES.map(
+                                                            (time) => (
+                                                                <option
+                                                                    key={time}
+                                                                    value={time}
+                                                                >
+                                                                    {time}
+                                                                </option>
+                                                            ),
+                                                        )}
                                                     </select>
                                                 </div>
                                                 {formData.meals.length > 1 && (
-                                                    <button type="button" onClick={() => handleRemoveMeal(meal.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
-                                                        <Trash2 className="w-4 h-4" />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            handleRemoveMeal(
+                                                                meal.id,
+                                                            )
+                                                        }
+                                                        className="rounded-lg p-2 text-red-500 hover:bg-red-50"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
                                                     </button>
                                                 )}
                                             </div>
 
                                             <div className="space-y-2">
                                                 {meal.foods.map((food) => (
-                                                    <div key={food.id} className="flex items-center gap-2 bg-white p-2 rounded border">
+                                                    <div
+                                                        key={food.id}
+                                                        className="flex items-center gap-2 rounded border bg-white p-2"
+                                                    >
                                                         <input
                                                             type="text"
                                                             value={food.name}
-                                                            onChange={(e) => handleUpdateFood(meal.id, food.id, 'name', e.target.value)}
-                                                            className="flex-1 px-2 py-1 border rounded text-sm"
+                                                            onChange={(e) =>
+                                                                handleUpdateFood(
+                                                                    meal.id,
+                                                                    food.id,
+                                                                    'name',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="flex-1 rounded border px-2 py-1 text-sm"
                                                             placeholder="Alimento"
                                                         />
                                                         <input
                                                             type="text"
                                                             value={food.portion}
-                                                            onChange={(e) => handleUpdateFood(meal.id, food.id, 'portion', e.target.value)}
-                                                            className="w-28 px-2 py-1 border rounded text-sm"
+                                                            onChange={(e) =>
+                                                                handleUpdateFood(
+                                                                    meal.id,
+                                                                    food.id,
+                                                                    'portion',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            className="w-28 rounded border px-2 py-1 text-sm"
                                                             placeholder="Porção"
                                                         />
                                                         <input
                                                             type="number"
-                                                            value={food.calories}
-                                                            onChange={(e) => handleUpdateFood(meal.id, food.id, 'calories', Number(e.target.value))}
-                                                            className="w-20 px-2 py-1 border rounded text-sm"
+                                                            value={
+                                                                food.calories
+                                                            }
+                                                            onChange={(e) =>
+                                                                handleUpdateFood(
+                                                                    meal.id,
+                                                                    food.id,
+                                                                    'calories',
+                                                                    Number(
+                                                                        e.target
+                                                                            .value,
+                                                                    ),
+                                                                )
+                                                            }
+                                                            className="w-20 rounded border px-2 py-1 text-sm"
                                                             placeholder="kcal"
                                                         />
-                                                        <button type="button" onClick={() => handleRemoveFood(meal.id, food.id)} className="p-1 text-red-400 hover:text-red-600">
-                                                            <X className="w-4 h-4" />
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                handleRemoveFood(
+                                                                    meal.id,
+                                                                    food.id,
+                                                                )
+                                                            }
+                                                            className="p-1 text-red-400 hover:text-red-600"
+                                                        >
+                                                            <X className="h-4 w-4" />
                                                         </button>
                                                     </div>
                                                 ))}
                                             </div>
-                                            <button type="button" onClick={() => handleAddFood(meal.id)} className="mt-2 flex items-center gap-1 text-sm text-gray-500 hover:text-emerald-600">
-                                                <Plus className="w-4 h-4" /> Adicionar Alimento
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    handleAddFood(meal.id)
+                                                }
+                                                className="mt-2 flex items-center gap-1 text-sm text-gray-500 hover:text-emerald-600"
+                                            >
+                                                <Plus className="h-4 w-4" />{' '}
+                                                Adicionar Alimento
                                             </button>
                                         </div>
                                     ))}
@@ -541,12 +784,18 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
                             </div>
                         </div>
 
-                        <div className="flex gap-3 p-6 border-t sticky bottom-0 bg-white">
-                            <button onClick={() => setShowFormModal(false)} className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50">
+                        <div className="sticky bottom-0 flex gap-3 border-t bg-white p-6">
+                            <button
+                                onClick={() => setShowFormModal(false)}
+                                className="flex-1 rounded-lg border px-4 py-2 hover:bg-gray-50"
+                            >
                                 Cancelar
                             </button>
-                            <button onClick={handleSave} className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center justify-center gap-2">
-                                <Save className="w-4 h-4" />
+                            <button
+                                onClick={handleSave}
+                                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
+                            >
+                                <Save className="h-4 w-4" />
                                 {editingPlan ? 'Salvar' : 'Criar Plano'}
                             </button>
                         </div>
@@ -555,65 +804,107 @@ export function MealPlans({ initialPlans = [] }: MealPlansProps) {
             )}
 
             {showDetailModal && selectedPlan && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-                        <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-white">
+                        <div className="sticky top-0 flex items-center justify-between border-b bg-white p-6">
                             <div>
-                                <h2 className="text-xl font-semibold">{selectedPlan.planName}</h2>
-                                <p className="text-gray-500">{selectedPlan.patientName} • {selectedPlan.calories} kcal</p>
+                                <h2 className="text-xl font-semibold">
+                                    {selectedPlan.planName}
+                                </h2>
+                                <p className="text-gray-500">
+                                    {selectedPlan.patientName} •{' '}
+                                    {selectedPlan.calories} kcal
+                                </p>
                             </div>
-                            <button onClick={() => setShowDetailModal(false)} className="text-gray-400 hover:text-gray-600">
-                                <X className="w-6 h-6" />
+                            <button
+                                onClick={() => setShowDetailModal(false)}
+                                className="text-gray-400 hover:text-gray-600"
+                            >
+                                <X className="h-6 w-6" />
                             </button>
                         </div>
 
                         <div className="p-6">
-                            <div className="flex flex-wrap items-center gap-4 mb-6 text-sm">
+                            <div className="mb-6 flex flex-wrap items-center gap-4 text-sm">
                                 <span className="flex items-center gap-1 text-gray-600">
-                                    <Check className="w-4 h-4 text-emerald-500" />
+                                    <Check className="h-4 w-4 text-emerald-500" />
                                     {selectedPlan.objective}
                                 </span>
-                                <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                                <span className="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-700">
                                     {selectedPlan.meals.length} refeições
                                 </span>
                                 {selectedPlan.restrictions.length > 0 && (
-                                    <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs">
+                                    <span className="rounded-full bg-orange-100 px-2 py-1 text-xs text-orange-700">
                                         {selectedPlan.restrictions.join(', ')}
                                     </span>
                                 )}
                             </div>
 
-                            <h3 className="font-semibold text-gray-900 mb-4">Refeições</h3>
+                            <h3 className="mb-4 font-semibold text-gray-900">
+                                Refeições
+                            </h3>
                             <div className="space-y-4">
-                                {selectedPlan.meals.filter(m => m.foods.length > 0).map((meal) => (
-                                    <div key={meal.id} className="bg-gray-50 rounded-lg p-4">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <h4 className="font-medium text-gray-900">{meal.name || 'Refeição'}</h4>
-                                            <span className="text-sm text-gray-500 flex items-center gap-1">
-                                                <Clock className="w-4 h-4" /> {meal.time}
-                                            </span>
+                                {selectedPlan.meals
+                                    .filter((m) => m.foods.length > 0)
+                                    .map((meal) => (
+                                        <div
+                                            key={meal.id}
+                                            className="rounded-lg bg-gray-50 p-4"
+                                        >
+                                            <div className="mb-3 flex items-center justify-between">
+                                                <h4 className="font-medium text-gray-900">
+                                                    {meal.name || 'Refeição'}
+                                                </h4>
+                                                <span className="flex items-center gap-1 text-sm text-gray-500">
+                                                    <Clock className="h-4 w-4" />{' '}
+                                                    {meal.time}
+                                                </span>
+                                            </div>
+                                            <ul className="space-y-2">
+                                                {meal.foods.map((food) => (
+                                                    <li
+                                                        key={food.id}
+                                                        className="flex items-center justify-between text-sm"
+                                                    >
+                                                        <span className="flex items-center gap-2">
+                                                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                                            {food.name}
+                                                            {food.portion && (
+                                                                <span className="text-gray-400">
+                                                                    (
+                                                                    {
+                                                                        food.portion
+                                                                    }
+                                                                    )
+                                                                </span>
+                                                            )}
+                                                        </span>
+                                                        <span className="text-gray-500">
+                                                            {food.calories} kcal
+                                                        </span>
+                                                    </li>
+                                                ))}
+                                            </ul>
                                         </div>
-                                        <ul className="space-y-2">
-                                            {meal.foods.map((food) => (
-                                                <li key={food.id} className="flex items-center justify-between text-sm">
-                                                    <span className="flex items-center gap-2">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                                        {food.name}
-                                                        {food.portion && <span className="text-gray-400">({food.portion})</span>}
-                                                    </span>
-                                                    <span className="text-gray-500">{food.calories} kcal</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                ))}
+                                    ))}
                             </div>
                         </div>
 
-                        <div className="flex gap-3 p-6 border-t sticky bottom-0 bg-white">
-                            <button onClick={() => setShowDetailModal(false)} className="flex-1 px-4 py-2 border rounded-lg">Fechar</button>
-                            <button onClick={(e) => { setShowDetailModal(false); handleOpenEdit(selectedPlan, e); }} className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg flex items-center justify-center gap-2">
-                                <Edit2 className="w-4 h-4" /> Editar
+                        <div className="sticky bottom-0 flex gap-3 border-t bg-white p-6">
+                            <button
+                                onClick={() => setShowDetailModal(false)}
+                                className="flex-1 rounded-lg border px-4 py-2"
+                            >
+                                Fechar
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    setShowDetailModal(false);
+                                    handleOpenEdit(selectedPlan, e);
+                                }}
+                                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-white"
+                            >
+                                <Edit2 className="h-4 w-4" /> Editar
                             </button>
                         </div>
                     </div>
