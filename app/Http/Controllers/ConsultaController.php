@@ -38,6 +38,7 @@ class ConsultaController extends Controller
             return [
                 'id' => (string) $cliente->id,
                 'name' => $cliente->name,
+                'phone' => $cliente->phone ?? '',
             ];
         });
 
