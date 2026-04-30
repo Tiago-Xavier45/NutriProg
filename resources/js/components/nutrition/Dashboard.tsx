@@ -120,11 +120,10 @@ export function Dashboard() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <span
-                                            className={`rounded-full px-2 py-1 text-xs font-medium ${
-                                                patient.status === 'Ativo'
+                                            className={`rounded-full px-2 py-1 text-xs font-medium ${patient.status === 'Ativo'
                                                     ? 'bg-emerald-100 text-emerald-700'
                                                     : 'bg-yellow-100 text-yellow-700'
-                                            }`}
+                                                }`}
                                         >
                                             {patient.status}
                                         </span>
