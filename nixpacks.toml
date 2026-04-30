@@ -16,11 +16,19 @@ nixPkgs = [
   "nodejs_20",
   "nodePackages.npm",
   "unzip",
-  "curl",
-  "phpPackages.composer"
+  "curl"
+]
+
+[phases.composer]
+dependsOn = ["setup"]
+cmds = [
+  "curl -sS https://getcomposer.org/installer -o composer-setup.php",
+  "php composer-setup.php --install-dir=/usr/local/bin --filename=composer",
+  "rm composer-setup.php"
 ]
 
 [phases.install]
+dependsOn = ["composer"]
 cmds = [
   "composer install --no-dev --optimize-autoloader --no-interaction",
   "npm ci"
