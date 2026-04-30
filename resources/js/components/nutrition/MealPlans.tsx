@@ -12,6 +12,7 @@ import {
     Save,
     AlertCircle,
     Check,
+    Download,
 } from 'lucide-react';
 import { usePage, router } from '@inertiajs/react';
 import { PageHeader, ContentCard } from '@/components/ui';
@@ -443,7 +444,7 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={(e) => handleOpenEdit(plan, e)}
-                                    className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                                    className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-green-200 bg-white px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-green-200"
                                 >
                                     <Edit2 className="h-4 w-4" />
                                     Editar
@@ -816,12 +817,21 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
                                     {selectedPlan.calories} kcal
                                 </p>
                             </div>
-                            <button
-                                onClick={() => setShowDetailModal(false)}
-                                className="text-gray-400 hover:text-gray-600"
-                            >
-                                <X className="h-6 w-6" />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => window.open(`${baseUrl}/planos/${selectedPlan.id}/download`, '_blank')}
+                                    className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
+                                >
+                                    <Download className="h-4 w-4" />
+                                    Baixar PDF
+                                </button>
+                                <button
+                                    onClick={() => setShowDetailModal(false)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
+                                    <X className="h-6 w-6" />
+                                </button>
+                            </div>
                         </div>
 
                         <div className="p-6">
@@ -891,21 +901,8 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
                         </div>
 
                         <div className="sticky bottom-0 flex gap-3 border-t bg-white p-6">
-                            <button
-                                onClick={() => setShowDetailModal(false)}
-                                className="flex-1 rounded-lg border px-4 py-2"
-                            >
-                                Fechar
-                            </button>
-                            <button
-                                onClick={(e) => {
-                                    setShowDetailModal(false);
-                                    handleOpenEdit(selectedPlan, e);
-                                }}
-                                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-white"
-                            >
-                                <Edit2 className="h-4 w-4" /> Editar
-                            </button>
+    
+            
                         </div>
                     </div>
                 </div>
