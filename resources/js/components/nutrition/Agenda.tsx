@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     ChevronLeft,
     ChevronRight,
@@ -107,8 +107,39 @@ export function Agenda({
         ? `/${page.props.currentTeam.slug}`
         : '';
 
+    // Horários disponíveis para o modal (considerando edição vs criação)
+    const availableTimeSlots = useMemo(() => {
+        if (!selectedDay) return [];
+        
+        // Se está editando, incluir o horário atual da consulta
+        if (editingAppointment) {
+            const currentSlots = selectedDay.slots;
+            if (!currentSlots.includes(editingAppointment.time)) {
+                return [editingAppointment.time, ...currentSlots].sort();
+            }
+            return currentSlots;
+        }
+        
+        // Para novo agendamento, apenas horários disponíveis
+        return selectedDay.slots;
+    }, [selectedDay, editingAppointment]);
+
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
+
+    // Atualizar selectedDay quando allAppointments mudar (exclusão, edição, criação)
+    // Comentado para evitar sobrescrita de selectedDay com dados errados
+    // useEffect(() => {
+    //     if (!selectedDay || !showModal) return;
+    //     
+    //     const updatedMonthData = getMonthData(year, month, allAppointments);
+    //     const dayOfMonth = new Date(selectedDay.date).getDate();
+    //     const updatedDayData = updatedMonthData[dayOfMonth - 1];
+    //     
+    //     if (updatedDayData) {
+    //         setSelectedDay(updatedDayData);
+    //     }
+    // }, [allAppointments, selectedDay?.date, showModal]);
     const monthName = currentDate.toLocaleDateString('pt-BR', {
         month: 'long',
     });
@@ -131,12 +162,17 @@ export function Agenda({
     }, [year, month]);
 
     const handleDayClick = (day: number) => {
-        const data = monthData[day - 1];
+        // Usar string da data (YYYY-MM-DD) para buscar no monthData
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const data = monthData.find(d => d.date === dateStr);
+        
         if (data) {
             setSelectedDay(data);
             setShowModal(true);
             setShowNewAppointment(false);
             setEditingAppointment(null);
+        } else {
+            console.error('Dados não encontrados para a data:', dateStr, 'monthData:', monthData);
         }
     };
 
@@ -159,32 +195,43 @@ export function Agenda({
         };
 
         router.post(`${baseUrl}/consultas`, data, {
-            onSuccess: () => {
-                const appointment: Appointment = {
-                    id: generateId(),
-                    patientId: selectedPatientId,
-                    patientName: selectedPatient?.name || '',
-                    phone: newAppointment.phone,
-                    time: newAppointment.time,
-                    date: appointmentDate,
-                    duration: newAppointment.duration,
-                    type: newAppointment.type,
-                    status: 'pendente',
-                    notes: newAppointment.notes,
-                };
-                setAllAppointments([...allAppointments, appointment]);
-                setNewAppointment({
-                    patientName: '',
-                    phone: '',
-                    time: '',
-                    duration: 60,
-                    type: 'consulta',
-                    notes: '',
-                });
-                setSelectedPatientId('');
-                setShowNewAppointment(false);
-                setShowModal(false);
-            },
+                onSuccess: () => {
+                    const appointment: Appointment = {
+                        id: generateId(),
+                        patientId: selectedPatientId,
+                        patientName: selectedPatient?.name || '',
+                        phone: newAppointment.phone,
+                        time: newAppointment.time,
+                        date: appointmentDate,
+                        duration: newAppointment.duration,
+                        type: newAppointment.type,
+                        status: 'pendente',
+                        notes: newAppointment.notes,
+                    };
+                    const updatedAppointments = [...allAppointments, appointment];
+                    setAllAppointments(updatedAppointments);
+                    
+                    // Atualizar selectedDay imediatamente para refletir o novo agendamento - usar string da data
+                    if (selectedDay && showModal) {
+                        const updatedMonthData = getMonthData(year, month, updatedAppointments);
+                        const updatedDayData = updatedMonthData.find(d => d.date === selectedDay.date);
+                        if (updatedDayData) {
+                            setSelectedDay(updatedDayData);
+                        }
+                    }
+                    
+                    setNewAppointment({
+                        patientName: '',
+                        phone: '',
+                        time: '',
+                        duration: 60,
+                        type: 'consulta',
+                        notes: '',
+                    });
+                    setSelectedPatientId('');
+                    setShowNewAppointment(false);
+                    setShowModal(false);
+                },
         });
     };
 
@@ -219,6 +266,16 @@ export function Agenda({
                             : apt,
                     );
                     setAllAppointments(updated);
+                    
+                    // Atualizar selectedDay após edição - usar string da data
+                    if (selectedDay && showModal) {
+                        const updatedMonthData = getMonthData(year, month, updated);
+                        const updatedDayData = updatedMonthData.find(d => d.date === selectedDay.date);
+                        if (updatedDayData) {
+                            setSelectedDay(updatedDayData);
+                        }
+                    }
+                    
                     setEditingAppointment(null);
                     setShowNewAppointment(false);
                     setShowModal(false);
@@ -241,9 +298,17 @@ export function Agenda({
         if (confirm('Excluir esta consulta?')) {
             router.delete(`${baseUrl}/consultas/${aptId}`, {
                 onSuccess: () => {
-                    setAllAppointments(
-                        allAppointments.filter((apt) => apt.id !== aptId),
-                    );
+                    const updatedAppointments = allAppointments.filter((apt) => apt.id !== aptId);
+                    setAllAppointments(updatedAppointments);
+                    
+                    // Atualizar selectedDay para refletir a exclusão imediata - usar string da data
+                    if (selectedDay && showModal) {
+                        const updatedMonthData = getMonthData(year, month, updatedAppointments);
+                        const updatedDayData = updatedMonthData.find(d => d.date === selectedDay.date);
+                        if (updatedDayData) {
+                            setSelectedDay(updatedDayData);
+                        }
+                    }
                 },
             });
         }
@@ -264,6 +329,15 @@ export function Agenda({
                             : apt,
                     );
                     setAllAppointments(updated);
+                    
+                    // Atualizar selectedDay após cancelamento
+                    if (selectedDay && showModal) {
+                        const updatedMonthData = getMonthData(year, month, updated);
+                        const updatedDayData = updatedMonthData.find(d => d.date === selectedDay.date);
+                        if (updatedDayData) {
+                            setSelectedDay(updatedDayData);
+                        }
+                    }
                 },
             },
         );
@@ -301,16 +375,16 @@ export function Agenda({
                 const activeAppointments = dayData.appointments.filter(
                     (a) => a.status !== 'cancelado',
                 );
-                if (
-                    activeAppointments.length > 0 &&
-                    dayData.slots.length === 0
-                ) {
-                    bgClass = 'bg-blue-50';
-                    dotColor = 'bg-blue-500';
-                } else if (activeAppointments.length > 0) {
+                // Dia com vagas disponíveis (tem slots livres) - Verde
+                if (dayData.slots.length > 0) {
                     bgClass = 'bg-emerald-50';
                     dotColor = 'bg-emerald-500';
+                } else if (activeAppointments.length > 0) {
+                    // Dia lotado (sem vagas, mas tem consultas) - Azul
+                    bgClass = 'bg-blue-50';
+                    dotColor = 'bg-blue-500';
                 } else {
+                    // Dia sem consultas e com vagas (mas não tem consultas marcadas) - Verde claro sem bolinha
                     dotColor = 'bg-gray-300';
                 }
             }
@@ -543,7 +617,7 @@ export function Agenda({
                                                 <option value="">
                                                     Selecione
                                                 </option>
-                                                {DEFAULT_SLOTS.map((slot) => (
+                                                {availableTimeSlots.map((slot) => (
                                                     <option
                                                         key={slot}
                                                         value={slot}

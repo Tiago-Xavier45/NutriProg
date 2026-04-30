@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Alimento;
+use App\Models\Cliente;
 use App\Models\PlanoAlimentar;
 use App\Models\Refeicao;
 use Illuminate\Http\Request;
@@ -55,7 +56,7 @@ class PlanoAlimentarController extends Controller
             ];
         });
 
-        $pacientes = \App\Models\Cliente::orderBy('name')->get()->map(function ($cliente) {
+        $pacientes = Cliente::orderBy('name')->get()->map(function ($cliente) {
             return [
                 'id' => (string) $cliente->id,
                 'name' => $cliente->name,
@@ -185,5 +186,14 @@ class PlanoAlimentarController extends Controller
         $plano->delete();
 
         return redirect()->back()->with('success', 'Plano alimentar excluído com sucesso!');
+    }
+
+    public function download(Request $request)
+    {
+        $planoId = $request->route('plano_id') ?? $request->route('plano');
+        $plano = PlanoAlimentar::with(['cliente', 'refeicoes.alimentos'])
+            ->findOrFail((int) $planoId);
+
+        return view('pdfs.plan', ['plano' => $plano]);
     }
 }
