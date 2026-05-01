@@ -3,14 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class ClienteController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
-        $query = Cliente::query();
+        $query = Cliente::query()->forTeam($request->user()->currentTeam);
 
         if ($request->has('search')) {
             $search = $request->get('search');
@@ -35,7 +37,7 @@ class ClienteController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -53,15 +55,20 @@ class ClienteController extends Controller
             'zip' => 'nullable|string|max:20',
         ]);
 
-        $cliente = Cliente::create($validated);
+        Cliente::create([
+            ...$validated,
+            'team_id' => $request->user()->currentTeam->id,
+        ]);
 
         return redirect()->back()->with('success', 'Paciente criado com sucesso!');
     }
 
-    public function update(Request $request)
+    public function update(Request $request): RedirectResponse
     {
         $clienteId = $request->route('cliente_id') ?? $request->route('cliente');
-        $cliente = Cliente::find((int) $clienteId);
+        $cliente = Cliente::query()
+            ->forTeam($request->user()->currentTeam)
+            ->find((int) $clienteId);
         if (! $cliente) {
             return redirect()->back()->with('error', 'Paciente não encontrado');
         }
@@ -87,10 +94,12 @@ class ClienteController extends Controller
         return redirect()->back()->with('success', 'Paciente atualizado com sucesso!');
     }
 
-    public function destroy(Request $request)
+    public function destroy(Request $request): RedirectResponse
     {
         $clienteId = $request->route('cliente_id') ?? $request->route('cliente');
-        $cliente = Cliente::find((int) $clienteId);
+        $cliente = Cliente::query()
+            ->forTeam($request->user()->currentTeam)
+            ->find((int) $clienteId);
         if (! $cliente) {
             return redirect()->back()->with('error', 'Paciente não encontrado');
         }

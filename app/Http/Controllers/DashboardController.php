@@ -5,19 +5,24 @@ namespace App\Http\Controllers;
 use App\Models\Cliente;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
-        $totalPacientes = Cliente::count();
-        $pacientesAtivos = Cliente::where('status', 'Ativo')->count();
-        $pacientesPendentes = Cliente::where('status', 'Pendente')->count();
+        $team = $request->user()->currentTeam;
 
-        $recentPatients = Cliente::orderBy('updated_at', 'desc')
+        $clientes = Cliente::query()->forTeam($team);
+
+        $totalPacientes = (clone $clientes)->count();
+        $pacientesAtivos = (clone $clientes)->where('status', 'Ativo')->count();
+        $pacientesPendentes = (clone $clientes)->where('status', 'Pendente')->count();
+
+        $recentPatients = $clientes->orderBy('updated_at', 'desc')
             ->limit(5)
             ->get()
-            ->map(function ($cliente) {
+            ->map(function (Cliente $cliente): array {
                 return [
                     'id' => $cliente->id,
                     'name' => $cliente->name,

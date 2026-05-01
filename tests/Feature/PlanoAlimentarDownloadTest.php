@@ -1,42 +1,44 @@
 <?php
 
-use App\Models\Alimento;
 use App\Models\Cliente;
 use App\Models\PlanoAlimentar;
-use App\Models\Refeicao;
+use App\Models\User;
 
 it('can access plan download page', function () {
-    // Criar um cliente e um plano com dados básicos
-    $cliente = Cliente::factory()->create();
-    $plano = PlanoAlimentar::factory()->create([
+    $user = User::factory()->create();
+    $cliente = Cliente::factory()->create([
+        'team_id' => $user->currentTeam->id,
+    ]);
+
+    $plano = PlanoAlimentar::create([
         'cliente_id' => $cliente->id,
         'nome' => 'Plano Teste',
+        'calorias' => 2000,
+        'status' => 'ativo',
     ]);
 
-    // Opcional: Criar algumas refeições e alimentos para o plano
-    $refeicao = Refeicao::factory()->create([
-        'plano_alimentar_id' => $plano->id,
-        'nome' => 'Café da Manhã',
-    ]);
+    $response = $this
+        ->actingAs($user)
+        ->get(route('planos.download', [
+            'current_team' => $user->currentTeam->slug,
+            'plano_id' => $plano->id,
+        ]));
 
-    Alimento::factory()->create([
-        'refeicao_id' => $refeicao->id,
-        'nome' => 'Pão Integral',
-    ]);
-
-    // Simular acesso à rota de download (sem autenticação por enquanto)
-    $response = $this->get(route('planos.download', $plano->id));
-
-    // Verificar se a resposta é 200 (OK)
     $response->assertStatus(200);
-
-    // Verificar se o conteúdo esperado está presente
     $response->assertSee('Plano Alimentar');
     $response->assertSee($plano->nome);
     $response->assertSee($cliente->name);
 });
 
 it('returns 404 for non-existent plan', function () {
-    $response = $this->get(route('planos.download', 9999));
+    $user = User::factory()->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->get(route('planos.download', [
+            'current_team' => $user->currentTeam->slug,
+            'plano_id' => 9999,
+        ]));
+
     $response->assertStatus(404);
 });

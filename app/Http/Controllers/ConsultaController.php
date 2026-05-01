@@ -4,22 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Models\Cliente;
 use App\Models\Consulta;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class ConsultaController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
+        $team = $request->user()->currentTeam;
         $month = $request->get('month', now()->month);
         $year = $request->get('year', now()->year);
 
         $consultas = Consulta::with('cliente')
+            ->whereHas('cliente', fn ($query) => $query->forTeam($team))
             ->whereYear('data', $year)
             ->whereMonth('data', $month)
             ->orderBy('horario')
             ->get()
-            ->map(function ($consulta) {
+            ->map(function (Consulta $consulta): array {
                 return [
                     'id' => (string) $consulta->id,
                     'patientId' => (string) $consulta->cliente_id,
@@ -34,13 +39,17 @@ class ConsultaController extends Controller
                 ];
             });
 
-        $pacientes = Cliente::orderBy('name')->get()->map(function ($cliente) {
-            return [
-                'id' => (string) $cliente->id,
-                'name' => $cliente->name,
-                'phone' => $cliente->phone ?? '',
-            ];
-        });
+        $pacientes = Cliente::query()
+            ->forTeam($team)
+            ->orderBy('name')
+            ->get()
+            ->map(function (Cliente $cliente): array {
+                return [
+                    'id' => (string) $cliente->id,
+                    'name' => $cliente->name,
+                    'phone' => $cliente->phone ?? '',
+                ];
+            });
 
         return Inertia::render('agenda', [
             'consultas' => $consultas,
@@ -50,10 +59,15 @@ class ConsultaController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
+        $team = $request->user()->currentTeam;
+
         $validated = $request->validate([
-            'cliente_id' => 'required|exists:clientes,id',
+            'cliente_id' => [
+                'required',
+                Rule::exists('clientes', 'id')->where('team_id', $team->id),
+            ],
             'data' => 'required|date',
             'horario' => 'required',
             'duracao' => 'nullable|integer|min:30|max:180',
@@ -68,16 +82,22 @@ class ConsultaController extends Controller
         return redirect()->back()->with('success', 'Consulta agendada com sucesso!');
     }
 
-    public function update(Request $request)
+    public function update(Request $request): RedirectResponse
     {
+        $team = $request->user()->currentTeam;
         $consultaId = $request->route('consulta_id') ?? $request->route('consulta');
-        $consulta = Consulta::find((int) $consultaId);
+        $consulta = Consulta::query()
+            ->whereHas('cliente', fn ($query) => $query->forTeam($team))
+            ->find((int) $consultaId);
         if (! $consulta) {
             return redirect()->back()->with('error', 'Consulta não encontrada');
         }
 
         $validated = $request->validate([
-            'cliente_id' => 'sometimes|exists:clientes,id',
+            'cliente_id' => [
+                'sometimes',
+                Rule::exists('clientes', 'id')->where('team_id', $team->id),
+            ],
             'data' => 'sometimes|date',
             'horario' => 'sometimes',
             'duracao' => 'nullable|integer|min:30|max:180',
@@ -92,10 +112,13 @@ class ConsultaController extends Controller
         return redirect()->back()->with('success', 'Consulta atualizada com sucesso!');
     }
 
-    public function destroy(Request $request)
+    public function destroy(Request $request): RedirectResponse
     {
+        $team = $request->user()->currentTeam;
         $consultaId = $request->route('consulta_id') ?? $request->route('consulta');
-        $consulta = Consulta::find((int) $consultaId);
+        $consulta = Consulta::query()
+            ->whereHas('cliente', fn ($query) => $query->forTeam($team))
+            ->find((int) $consultaId);
         if (! $consulta) {
             return redirect()->back()->with('error', 'Consulta não encontrada');
         }

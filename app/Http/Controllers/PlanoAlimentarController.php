@@ -6,14 +6,20 @@ use App\Models\Alimento;
 use App\Models\Cliente;
 use App\Models\PlanoAlimentar;
 use App\Models\Refeicao;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class PlanoAlimentarController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
-        $query = PlanoAlimentar::with(['cliente', 'refeicoes.alimentos']);
+        $team = $request->user()->currentTeam;
+
+        $query = PlanoAlimentar::with(['cliente', 'refeicoes.alimentos'])
+            ->whereHas('cliente', fn ($builder) => $builder->forTeam($team));
 
         if ($request->has('search')) {
             $search = $request->get('search');
@@ -25,7 +31,7 @@ class PlanoAlimentarController extends Controller
             });
         }
 
-        $planos = $query->orderBy('updated_at', 'desc')->get()->map(function ($plano) {
+        $planos = $query->orderBy('updated_at', 'desc')->get()->map(function (PlanoAlimentar $plano): array {
             return [
                 'id' => $plano->id,
                 'patientId' => $plano->cliente_id,
@@ -38,12 +44,12 @@ class PlanoAlimentarController extends Controller
                 'notes' => $plano->observacoes,
                 'createdAt' => $plano->created_at->format('d/m/Y'),
                 'updatedAt' => $plano->updated_at->format('d/m/Y'),
-                'meals' => $plano->refeicoes->map(function ($refeicao) {
+                'meals' => $plano->refeicoes->map(function (Refeicao $refeicao): array {
                     return [
                         'id' => $refeicao->id,
                         'name' => $refeicao->nome,
                         'time' => substr($refeicao->horario, 0, 5),
-                        'foods' => $refeicao->alimentos->map(function ($alimento) {
+                        'foods' => $refeicao->alimentos->map(function (Alimento $alimento): array {
                             return [
                                 'id' => $alimento->id,
                                 'name' => $alimento->nome,
@@ -56,12 +62,16 @@ class PlanoAlimentarController extends Controller
             ];
         });
 
-        $pacientes = Cliente::orderBy('name')->get()->map(function ($cliente) {
-            return [
-                'id' => (string) $cliente->id,
-                'name' => $cliente->name,
-            ];
-        });
+        $pacientes = Cliente::query()
+            ->forTeam($team)
+            ->orderBy('name')
+            ->get()
+            ->map(function (Cliente $cliente): array {
+                return [
+                    'id' => (string) $cliente->id,
+                    'name' => $cliente->name,
+                ];
+            });
 
         return Inertia::render('planos', [
             'planos' => $planos,
@@ -69,10 +79,15 @@ class PlanoAlimentarController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
+        $team = $request->user()->currentTeam;
+
         $validated = $request->validate([
-            'cliente_id' => 'required|exists:clientes,id',
+            'cliente_id' => [
+                'required',
+                Rule::exists('clientes', 'id')->where('team_id', $team->id),
+            ],
             'nome' => 'required|string|max:255',
             'calorias' => 'nullable|integer|min:500|max:10000',
             'objetivo' => 'nullable|string|max:255',
@@ -126,16 +141,22 @@ class PlanoAlimentarController extends Controller
         return redirect()->back()->with('success', 'Plano alimentar criado com sucesso!');
     }
 
-    public function update(Request $request)
+    public function update(Request $request): RedirectResponse
     {
+        $team = $request->user()->currentTeam;
         $planoId = $request->route('plano_id') ?? $request->route('plano');
-        $plano = PlanoAlimentar::find((int) $planoId);
+        $plano = PlanoAlimentar::query()
+            ->whereHas('cliente', fn ($builder) => $builder->forTeam($team))
+            ->find((int) $planoId);
         if (! $plano) {
             return redirect()->back()->with('error', 'Plano não encontrado');
         }
 
         $validated = $request->validate([
-            'cliente_id' => 'sometimes|exists:clientes,id',
+            'cliente_id' => [
+                'sometimes',
+                Rule::exists('clientes', 'id')->where('team_id', $team->id),
+            ],
             'nome' => 'sometimes|string|max:255',
             'calorias' => 'nullable|integer|min:500|max:10000',
             'objetivo' => 'nullable|string|max:255',
@@ -176,10 +197,13 @@ class PlanoAlimentarController extends Controller
         return redirect()->back()->with('success', 'Plano alimentar atualizado com sucesso!');
     }
 
-    public function destroy(Request $request)
+    public function destroy(Request $request): RedirectResponse
     {
+        $team = $request->user()->currentTeam;
         $planoId = $request->route('plano_id') ?? $request->route('plano');
-        $plano = PlanoAlimentar::find((int) $planoId);
+        $plano = PlanoAlimentar::query()
+            ->whereHas('cliente', fn ($builder) => $builder->forTeam($team))
+            ->find((int) $planoId);
         if (! $plano) {
             return redirect()->back()->with('error', 'Plano não encontrado');
         }
@@ -190,8 +214,10 @@ class PlanoAlimentarController extends Controller
 
     public function download(Request $request)
     {
+        $team = $request->user()->currentTeam;
         $planoId = $request->route('plano_id') ?? $request->route('plano');
         $plano = PlanoAlimentar::with(['cliente', 'refeicoes.alimentos'])
+            ->whereHas('cliente', fn ($builder) => $builder->forTeam($team))
             ->findOrFail((int) $planoId);
 
         return view('pdfs.plan', ['plano' => $plano]);

@@ -6,19 +6,22 @@ use App\Models\Cliente;
 use App\Models\Consulta;
 use App\Models\PlanoAlimentar;
 use App\Models\Relatorio;
+use App\Models\Team;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class RelatorioController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
+        $team = $request->user()->currentTeam;
         $period = $request->get('period', 'mes');
 
-        $stats = $this->getStats($period);
-        $pacientesPorMes = $this->getPacientesPorMes();
-        $planosDistribution = $this->getPlanosDistribution();
+        $stats = $this->getStats($team, $period);
+        $pacientesPorMes = $this->getPacientesPorMes($team);
+        $planosDistribution = $this->getPlanosDistribution($team);
 
         $savedReports = Relatorio::orderBy('created_at', 'desc')->limit(10)->get()->map(function ($r) {
             return [
@@ -66,25 +69,30 @@ class RelatorioController extends Controller
         return redirect()->back()->with('success', 'Relatório excluído!');
     }
 
-    private function getStats($period)
+    private function getStats(Team $team, string $period): array
     {
         $dateFilter = $this->getDateFilter($period);
 
-        $totalPacientes = Cliente::when($dateFilter, function ($query) use ($dateFilter) {
+        $totalPacientes = Cliente::query()->forTeam($team)->when($dateFilter, function ($query) use ($dateFilter) {
             return $query->where('created_at', '>=', $dateFilter);
         })->count();
 
-        $pacientesAtivos = Cliente::where('status', 'Ativo')
+        $pacientesAtivos = Cliente::query()->forTeam($team)->where('status', 'Ativo')
             ->when($dateFilter, function ($query) use ($dateFilter) {
                 return $query->where('created_at', '>=', $dateFilter);
             })
             ->count();
 
-        $totalConsultas = Consulta::when($dateFilter, function ($query) use ($dateFilter) {
-            return $query->where('data', '>=', $dateFilter);
-        })->count();
+        $totalConsultas = Consulta::query()
+            ->whereHas('cliente', fn ($query) => $query->forTeam($team))
+            ->when($dateFilter, function ($query) use ($dateFilter) {
+                return $query->where('data', '>=', $dateFilter);
+            })
+            ->count();
 
-        $totalPlanos = PlanoAlimentar::where('status', 'ativo')
+        $totalPlanos = PlanoAlimentar::query()
+            ->whereHas('cliente', fn ($query) => $query->forTeam($team))
+            ->where('status', 'ativo')
             ->when($dateFilter, function ($query) use ($dateFilter) {
                 return $query->where('created_at', '>=', $dateFilter);
             })
@@ -98,7 +106,7 @@ class RelatorioController extends Controller
         ];
     }
 
-    private function getDateFilter($period)
+    private function getDateFilter(string $period)
     {
         switch ($period) {
             case 'semana':
@@ -114,7 +122,7 @@ class RelatorioController extends Controller
         }
     }
 
-    private function getPacientesPorMes()
+    private function getPacientesPorMes(Team $team): array
     {
         $months = [];
 
@@ -122,11 +130,14 @@ class RelatorioController extends Controller
             $date = now()->subMonths($i);
             $monthName = $date->format('M');
 
-            $pacientes = Cliente::whereYear('created_at', $date->year)
+            $pacientes = Cliente::query()->forTeam($team)
+                ->whereYear('created_at', $date->year)
                 ->whereMonth('created_at', $date->month)
                 ->count();
 
-            $consultas = Consulta::whereYear('data', $date->year)
+            $consultas = Consulta::query()
+                ->whereHas('cliente', fn ($query) => $query->forTeam($team))
+                ->whereYear('data', $date->year)
                 ->whereMonth('data', $date->month)
                 ->count();
 
@@ -140,9 +151,11 @@ class RelatorioController extends Controller
         return $months;
     }
 
-    private function getPlanosDistribution()
+    private function getPlanosDistribution(Team $team): array
     {
-        $plans = Cliente::select('plan', DB::raw('COUNT(*) as total'))
+        $plans = Cliente::query()
+            ->forTeam($team)
+            ->select('plan', DB::raw('COUNT(*) as total'))
             ->whereNotNull('plan')
             ->where('plan', '!=', '')
             ->groupBy('plan')
