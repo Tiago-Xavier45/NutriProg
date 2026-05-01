@@ -14,6 +14,8 @@ WORKDIR /var/www/html
 # Copy application files first
 COPY . .
 
+RUN php -v
+
 # Install composer dependencies
 RUN composer install --no-dev --optimize-autoloader
 
