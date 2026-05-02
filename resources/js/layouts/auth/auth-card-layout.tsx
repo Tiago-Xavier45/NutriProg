@@ -1,13 +1,5 @@
 import { Link } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
-import AppLogoIcon from '@/components/app-logo-icon';
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from '@/components/ui/card';
 import { home } from '@/routes';
 
 export default function AuthCardLayout({
@@ -20,27 +12,89 @@ export default function AuthCardLayout({
     description?: string;
 }>) {
     return (
-        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
-            <div className="flex w-full max-w-md flex-col gap-6">
-                <Link
-                    href={home()}
-                    className="flex items-center gap-2 self-center font-medium"
-                >
-                    <div className="flex h-9 w-9 items-center justify-center">
-                        <AppLogoIcon className="size-9 fill-current text-black dark:text-white" />
-                    </div>
+        <div className="flex min-h-svh font-['DM_Sans',sans-serif] bg-[#F7F5F0]">
+            {/* Painel esquerdo decorativo */}
+            <div className="hidden lg:flex lg:w-[420px] xl:w-[480px] flex-col justify-between bg-[#2C4425] p-10 relative overflow-hidden flex-shrink-0">
+                {/* Gradiente de fundo */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_60%,rgba(107,155,94,0.25)_0%,transparent_65%),radial-gradient(ellipse_at_80%_10%,rgba(180,200,160,0.12)_0%,transparent_55%)]" />
+                {/* Linhas diagonais sutis */}
+                <div className="absolute inset-0"
+                    style={{
+                        backgroundImage: 'repeating-linear-gradient(-45deg, transparent, transparent 38px, rgba(255,255,255,0.025) 38px, rgba(255,255,255,0.025) 39px)'
+                    }}
+                />
+
+                {/* Logo */}
+                <Link href={home()} className="relative z-10 flex items-baseline gap-0.5 w-fit">
+                    <span className="font-['Cormorant_Garamond',serif] text-[20px] font-light tracking-[0.05em] text-white">
+                        NutriPro
+                    </span>
+                    <span className="mb-0.5 ml-0.5 inline-block h-[5px] w-[5px] rounded-full bg-[#6B9B5E]" />
                 </Link>
 
-                <div className="flex flex-col gap-6">
-                    <Card className="rounded-xl">
-                        <CardHeader className="px-10 pt-8 pb-0 text-center">
-                            <CardTitle className="text-xl">{title}</CardTitle>
-                            <CardDescription>{description}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="px-10 py-8">
-                            {children}
-                        </CardContent>
-                    </Card>
+                {/* Quote central */}
+                <div className="relative z-10">
+                    <h2 className="font-['Cormorant_Garamond',serif] text-[38px] font-light leading-[1.12] text-white mb-4">
+                        Nutrição com<br />
+                        <em className="italic text-[#9DC98E]">inteligência</em><br />
+                        e cuidado
+                    </h2>
+                    <p className="text-[13px] font-light text-white/50 leading-relaxed max-w-[240px]">
+                        A plataforma que acompanha você e seus pacientes em cada etapa da jornada nutricional.
+                    </p>
+                </div>
+
+                {/* Stats */}
+                <div className="relative z-10 flex items-stretch gap-7">
+                    <div>
+                       
+                        
+                    </div>
+                    <div className="w-px bg-white/10" />
+                    <div>
+                       
+                    
+                    </div>
+                    <div className="w-px bg-white/10" />
+                    <div>
+                      
+                       
+                    </div>
+                </div>
+            </div>
+
+            {/* Painel direito — formulário */}
+            <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
+                {/* Logo mobile */}
+                <Link href={home()} className="flex lg:hidden items-baseline gap-0.5 mb-10">
+                    <span className="font-['Cormorant_Garamond',serif] text-[22px] font-light tracking-wide text-[#1a1a18]">
+                        NutriPro
+                    </span>
+                    <span className="mb-0.5 ml-0.5 inline-block h-[5px] w-[5px] rounded-full bg-[#6B9B5E]" />
+                </Link>
+
+                <div className="w-full max-w-[400px]">
+                    {/* Header */}
+                    {(title || description) && (
+                        <div className="mb-8">
+                            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#6B9B5E] mb-2">
+                                Bem-vindo de volta
+                            </p>
+                            {title && (
+                                <h1 className="font-['Cormorant_Garamond',serif] text-[38px] font-light leading-[1.1] text-[#1a1a18]">
+                                    {title}
+                                </h1>
+                            )}
+                            {description && (
+                                <p className="mt-1.5 text-[13px] font-light text-[#999] leading-relaxed">
+                                    {description}
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Conteúdo (formulário) */}
+                    {children}
                 </div>
             </div>
         </div>

@@ -1,4 +1,5 @@
-import AuthLayoutTemplate from '@/layouts/auth/auth-simple-layout';
+// resources/js/layouts/auth-layout.tsx
+import AuthCardLayout from '@/layouts/auth/auth-card-layout';
 
 export default function AuthLayout({
     title = '',
@@ -10,8 +11,8 @@ export default function AuthLayout({
     children: React.ReactNode;
 }) {
     return (
-        <AuthLayoutTemplate title={title} description={description}>
+        <AuthCardLayout title={title} description={description}>
             {children}
-        </AuthLayoutTemplate>
+        </AuthCardLayout>
     );
 }
