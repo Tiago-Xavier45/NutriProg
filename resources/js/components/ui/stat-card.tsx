@@ -1,47 +1,73 @@
-import { type LucideIcon } from 'lucide-react';
-import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface StatCardProps {
     label: string;
     value: string;
     icon: LucideIcon;
-    color: 'blue' | 'emerald' | 'purple' | 'orange';
+    color?: 'blue' | 'emerald' | 'purple' | 'orange';
     trend?: {
         value: string;
         type: 'up' | 'down' | 'neutral';
     };
 }
 
-const colorMap = {
-    blue: 'bg-blue-500',
-    emerald: 'bg-emerald-500',
-    purple: 'bg-purple-500',
-    orange: 'bg-orange-500',
+const colorVariants = {
+    blue: 'bg-blue-500/10 text-blue-500',
+    emerald: 'bg-emerald-500/10 text-emerald-500',
+    purple: 'bg-purple-500/10 text-purple-500',
+    orange: 'bg-orange-500/10 text-orange-500',
 };
 
-const trendColorMap = {
-    up: 'text-emerald-600',
-    down: 'text-red-500',
-    neutral: 'text-gray-500',
-};
-
-export function StatCard({ label, value, icon: Icon, color, trend }: StatCardProps) {
+export function StatCard({
+    label,
+    value,
+    icon: Icon,
+    color = 'emerald',
+    trend,
+}: StatCardProps) {
     return (
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-                <div className={`${colorMap[color]} p-3 rounded-lg shadow-sm`}>
-                    <Icon className="w-6 h-6 text-white" />
+        <div className="rounded-xl border border-border bg-card p-5 shadow-sm transition hover:shadow-md">
+
+            {/* TOP */}
+            <div className="flex items-start justify-between">
+
+                {/* ICON */}
+                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${colorVariants[color]}`}>
+                    <Icon className="h-5 w-5" />
                 </div>
+
+                {/* TREND */}
                 {trend && (
-                    <div className={`flex items-center gap-1 text-sm ${trendColorMap[trend.type]}`}>
-                        {trend.type === 'up' && <ArrowUpRight className="w-4 h-4" />}
-                        {trend.type === 'down' && <ArrowDownRight className="w-4 h-4" />}
+                    <div
+                        className={`
+                            flex items-center gap-1 text-xs font-medium
+                            ${
+                                trend.type === 'up'
+                                    ? 'text-emerald-500'
+                                    : trend.type === 'down'
+                                    ? 'text-red-500'
+                                    : 'text-muted-foreground'
+                            }
+                        `}
+                    >
+                        {trend.type === 'up' && <ArrowUpRight className="h-3.5 w-3.5" />}
+                        {trend.type === 'down' && <ArrowDownRight className="h-3.5 w-3.5" />}
+                        {trend.type === 'neutral' && <Minus className="h-3.5 w-3.5" />}
                         {trend.value}
                     </div>
                 )}
             </div>
-            <p className="mt-4 text-3xl font-bold text-gray-900">{value}</p>
-            <p className="text-gray-500 text-sm">{label}</p>
+
+            {/* VALUE */}
+            <div className="mt-4 text-2xl font-semibold text-foreground">
+                {value}
+            </div>
+
+            {/* LABEL */}
+            <div className="text-sm text-muted-foreground">
+                {label}
+            </div>
         </div>
     );
 }

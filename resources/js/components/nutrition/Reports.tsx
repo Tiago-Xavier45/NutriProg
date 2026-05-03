@@ -272,7 +272,7 @@ export function Reports({
 
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                 <div>
-                                    <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-gray-700">
+                                    <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-black-700">
                                         <BarChart3 className="h-4 w-4" />
                                         Pacientes e Consultas
                                     </h3>
@@ -282,7 +282,7 @@ export function Reports({
                                                 key={data.month}
                                                 className="flex items-center gap-4"
                                             >
-                                                <span className="w-8 text-sm text-gray-500">
+                                                <span className="w-8 text-sm text-black-500">
                                                     {data.month}
                                                 </span>
                                                 <div className="flex flex-1 gap-2">
@@ -325,7 +325,7 @@ export function Reports({
                                 </div>
 
                                 <div>
-                                    <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-gray-700">
+                                    <h3 className="mb-4 flex items-center gap-2 text-sm font-medium text-black-700">
                                         <PieChart className="h-4 w-4" />
                                         Distribuição de Planos
                                     </h3>
@@ -344,13 +344,13 @@ export function Reports({
                                                                     plan.color,
                                                             }}
                                                         />
-                                                        <span className="flex-1 text-sm text-gray-600">
+                                                        <span className="flex-1 text-sm text-black-600">
                                                             {plan.name}
                                                         </span>
-                                                        <span className="text-sm font-medium text-gray-900">
+                                                        <span className="text-sm font-medium text-black-900">
                                                             {plan.value}%
                                                         </span>
-                                                        <div className="h-2 w-24 overflow-hidden rounded-full bg-gray-100">
+                                                        <div className="h-2 w-24 overflow-hidden rounded-full bg-black-100">
                                                             <div
                                                                 className="h-full rounded-full"
                                                                 style={{

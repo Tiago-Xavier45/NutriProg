@@ -2,7 +2,7 @@ import { usePage } from '@inertiajs/react';
 import { Users, UtensilsCrossed, Calendar, TrendingUp } from 'lucide-react';
 import { PageHeader, StatCard, ContentCard } from '@/components/ui';
 
-interface PageProps {
+interface PageProps extends Record<string, unknown> {
     stats: Array<{
         name: string;
         value: string;
@@ -45,11 +45,14 @@ export function Dashboard() {
 
     return (
         <div className="space-y-6">
+
+            {/* HEADER */}
             <PageHeader
                 title="Dashboard"
                 description="Visão geral do seu consultório"
             />
 
+            {/* STATS */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {stats.map((stat) => {
                     const Icon = iconMap[stat.icon] || Users;
@@ -72,58 +75,79 @@ export function Dashboard() {
                 })}
             </div>
 
+            {/* TABELA */}
             <ContentCard showHeader={{ title: 'Últimos Pacientes' }}>
                 <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-50">
+
+                    <table className="w-full text-sm">
+                        
+                        {/* HEADER */}
+                        <thead className="bg-muted/50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                                     Paciente
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                                     Plano
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                                     Última Visita
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                                     Status
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+
+                        {/* BODY */}
+                        <tbody className="divide-y divide-border">
                             {recentPatients.map((patient) => (
                                 <tr
                                     key={patient.id}
-                                    className="transition-colors hover:bg-gray-50"
+                                    className="transition-colors hover:bg-muted/40"
                                 >
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100">
-                                                <span className="text-sm font-medium text-emerald-700">
-                                                    {patient.name
-                                                        .split(' ')
-                                                        .map((n) => n[0])
-                                                        .join('')}
-                                                </span>
+                                    {/* PACIENTE */}
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+
+                                            {/* Avatar */}
+                                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
+                                                {patient.name
+                                                    .split(' ')
+                                                    .map((n) => n[0])
+                                                    .join('')
+                                                    .slice(0, 2)}
                                             </div>
-                                            <span className="ml-3 text-sm font-medium text-gray-900">
+
+                                            <span className="font-medium text-foreground">
                                                 {patient.name}
                                             </span>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
+
+                                    {/* PLANO */}
+                                    <td className="px-6 py-4 text-muted-foreground">
                                         {patient.plan}
                                     </td>
-                                    <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
-                                        {patient.lastVisit}
+
+                                    {/* VISITA */}
+                                    <td className="px-6 py-4 text-muted-foreground">
+                                        {patient.lastVisit || '—'}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
+
+                                    {/* STATUS */}
+                                    <td className="px-6 py-4">
                                         <span
-                                            className={`rounded-full px-2 py-1 text-xs font-medium ${patient.status === 'Ativo'
-                                                    ? 'bg-emerald-100 text-emerald-700'
-                                                    : 'bg-yellow-100 text-yellow-700'
-                                                }`}
+                                            className={`
+                                                rounded-full px-2.5 py-1 text-xs font-medium
+                                                ${
+                                                    patient.status === 'Ativo'
+                                                        ? 'bg-primary/10 text-primary'
+                                                        : patient.status === 'Pendente'
+                                                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                                        : 'bg-muted text-muted-foreground'
+                                                }
+                                            `}
                                         >
                                             {patient.status}
                                         </span>
@@ -132,6 +156,13 @@ export function Dashboard() {
                             ))}
                         </tbody>
                     </table>
+
+                    {/* EMPTY STATE */}
+                    {recentPatients.length === 0 && (
+                        <div className="p-8 text-center text-sm text-muted-foreground">
+                            Nenhum paciente recente
+                        </div>
+                    )}
                 </div>
             </ContentCard>
         </div>

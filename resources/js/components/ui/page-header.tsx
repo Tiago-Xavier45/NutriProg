@@ -18,15 +18,15 @@ export function PageHeader({ title, description, count, action }: PageHeaderProp
     return (
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 px-6">
             <div>
-                <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+                <h1 className="text-2xl font-bold text-white-900">{title}</h1>
                 <div className="flex items-center gap-2 mt-1">
                     {count && (
-                        <p className="text-sm text-gray-500">{count}</p>
+                        <p className="text-sm text-white-500">{count}</p>
                     )}
                     {description && (
                         <>
-                            {count && <span className="text-gray-300">•</span>}
-                            <p className="text-sm text-gray-500">{description}</p>
+                            {count && <span className="text-white-300">•</span>}
+                            <p className="text-sm text-white-500">{description}</p>
                         </>
                     )}
                 </div>
