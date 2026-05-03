@@ -12,12 +12,10 @@ export default function AuthCardLayout({
     description?: string;
 }>) {
     return (
-        <div className="flex min-h-svh font-['DM_Sans',sans-serif] bg-[#F7F5F0]">
-            {/* Painel esquerdo decorativo */}
+        <div className="flex min-h-svh font-['DM_Sans',sans-serif] bg-background">
+            {/* Painel esquerdo decorativo — fixo, intencional em ambos os modos */}
             <div className="hidden lg:flex lg:w-[420px] xl:w-[480px] flex-col justify-between bg-[#2C4425] p-10 relative overflow-hidden flex-shrink-0">
-                {/* Gradiente de fundo */}
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_60%,rgba(107,155,94,0.25)_0%,transparent_65%),radial-gradient(ellipse_at_80%_10%,rgba(180,200,160,0.12)_0%,transparent_55%)]" />
-                {/* Linhas diagonais sutis */}
                 <div className="absolute inset-0"
                     style={{
                         backgroundImage: 'repeating-linear-gradient(-45deg, transparent, transparent 38px, rgba(255,255,255,0.025) 38px, rgba(255,255,255,0.025) 39px)'
@@ -44,56 +42,39 @@ export default function AuthCardLayout({
                     </p>
                 </div>
 
-                {/* Stats */}
-                <div className="relative z-10 flex items-stretch gap-7">
-                    <div>
-                       
-                        
-                    </div>
-                    <div className="w-px bg-white/10" />
-                    <div>
-                       
-                    
-                    </div>
-                    <div className="w-px bg-white/10" />
-                    <div>
-                      
-                       
-                    </div>
-                </div>
+                {/* Espaço vazio onde estavam os stats removidos */}
+                <div />
             </div>
 
             {/* Painel direito — formulário */}
-            <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
+            <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 bg-background">
                 {/* Logo mobile */}
                 <Link href={home()} className="flex lg:hidden items-baseline gap-0.5 mb-10">
-                    <span className="font-['Cormorant_Garamond',serif] text-[22px] font-light tracking-wide text-[#1a1a18]">
+                    <span className="font-['Cormorant_Garamond',serif] text-[22px] font-light tracking-wide text-foreground">
                         NutriPro
                     </span>
-                    <span className="mb-0.5 ml-0.5 inline-block h-[5px] w-[5px] rounded-full bg-[#6B9B5E]" />
+                    <span className="mb-0.5 ml-0.5 inline-block h-[5px] w-[5px] rounded-full bg-accent" />
                 </Link>
 
                 <div className="w-full max-w-[400px]">
-                    {/* Header */}
                     {(title || description) && (
                         <div className="mb-8">
-                            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#6B9B5E] mb-2">
+                            <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-accent mb-2">
                                 Bem-vindo de volta
                             </p>
                             {title && (
-                                <h1 className="font-['Cormorant_Garamond',serif] text-[38px] font-light leading-[1.1] text-[#1a1a18]">
+                                <h1 className="font-['Cormorant_Garamond',serif] text-[38px] font-light leading-[1.1] text-foreground">
                                     {title}
                                 </h1>
                             )}
                             {description && (
-                                <p className="mt-1.5 text-[13px] font-light text-[#999] leading-relaxed">
+                                <p className="mt-1.5 text-[13px] font-light text-muted-foreground leading-relaxed">
                                     {description}
                                 </p>
                             )}
                         </div>
                     )}
 
-                    {/* Conteúdo (formulário) */}
                     {children}
                 </div>
             </div>
