@@ -42,25 +42,25 @@
     const generateId = () => Math.random().toString(36).substring(2, 15);
 
     const typeColors = {
-        consulta: {
-            bg: 'bg-blue-50',
-            border: 'border-blue-200',
-            text: 'text-blue-700',
-            badge: 'bg-blue-200',
-        },
-        retorno: {
-            bg: 'bg-purple-50',
-            border: 'border-purple-200',
-            text: 'text-purple-700',
-            badge: 'bg-purple-200',
-        },
-        avaliacao: {
-            bg: 'bg-orange-50',
-            border: 'border-orange-200',
-            text: 'text-orange-700',
-            badge: 'bg-orange-200',
-        },
-    };
+    consulta: {
+        bg:     'bg-blue-50/80 dark:bg-blue-900/20',
+        border: 'border-blue-200 dark:border-blue-800',
+        text:   'text-blue-700 dark:text-blue-300',
+        badge:  'bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-200',
+    },
+    retorno: {
+        bg:     'bg-purple-50/80 dark:bg-purple-900/20',
+        border: 'border-purple-200 dark:border-purple-800',
+        text:   'text-purple-700 dark:text-purple-300',
+        badge:  'bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-200',
+    },
+    avaliacao: {
+        bg:     'bg-amber-50/80 dark:bg-amber-900/20',
+        border: 'border-amber-200 dark:border-amber-800',
+        text:   'text-amber-700 dark:text-amber-300',
+        badge:  'bg-amber-100 text-amber-800 dark:bg-amber-800 dark:text-amber-200',
+    },
+};
 
     const inputClass = "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30";
     const labelClass = "mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-foreground";
@@ -507,7 +507,7 @@
                                                                             {apt.status === 'confirmado' && <Check className="h-3 w-3" />}
                                                                             {apt.status === 'pendente' && <AlertCircle className="h-3 w-3" />}
                                                                             {apt.status}
-                                                                        </span>
+                                                                        </span> 
                                                                     </div>
                                                                 </div>
 

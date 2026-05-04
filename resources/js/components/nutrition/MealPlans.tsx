@@ -139,13 +139,13 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
             nome: formData.planName,
             calorias: formData.calories,
             objetivo: formData.objective,
-            restricoes: JSON.stringify(formData.restrictions),
+            restricoes: formData.restrictions,
             observacoes: formData.notes,
             status: formData.status,
-            meals: JSON.stringify(formData.meals.map((m, index) => ({
+            meals: formData.meals.map((m, index) => ({
                 nome: m.nome, horario: m.horario, ordem: index,
                 alimentos: m.foods.map((f) => ({ nome: f.name, porcao: f.portion, calorias: f.calories })),
-            }))),
+            })),
         };
         if (editingPlan) {
             router.put(`${baseUrl}/planos/${editingPlan.id}`, data, { onSuccess: () => window.location.reload() });
