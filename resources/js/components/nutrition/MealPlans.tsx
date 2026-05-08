@@ -1,13 +1,21 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Clock, UtensilsCrossed, X, Save, Check, Download } from 'lucide-react';
+import { Plus, Edit2, Trash2, Clock, UtensilsCrossed, X, Save, Check, Download, Copy } from 'lucide-react';
 import { usePage, router } from '@inertiajs/react';
 import { PageHeader, ContentCard } from '@/components/ui';
+import { FoodSearch } from '@/components/food-search';
 
 interface Food {
     id: string;
     name: string;
     portion: string;
     calories: number;
+    quantity: number;
+    per100g?: {
+        calorias: number;
+        proteinas: number;
+        carboidratos: number;
+        gorduras: number;
+    };
 }
 
 interface Meal {
@@ -39,10 +47,10 @@ interface MealPlansProps {
     pacientes?: Array<{ id: string; name: string }>;
 }
 
-const OBJECTIVES = ['Perda de peso','Ganho de massa muscular','Manutenção do peso','Controle glicêmico','Melhora da saúde geral','Recomposição corporal'];
-const RESTRICTIONS = ['Glúten','Lactose','Açúcar','Frutos do mar','Vegetariano','Vegano','Halal','Kosher'];
-const DEFAULT_MEALS = ['Café da Manhã','Lanche da Manhã','Almoço','Lanche da Tarde','Jantar','Ceia'];
-const MEAL_TIMES = ['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'];
+const OBJECTIVES = ['Perda de peso', 'Ganho de massa muscular', 'Manutenção do peso', 'Controle glicêmico', 'Melhora da saúde geral', 'Recomposição corporal'];
+const RESTRICTIONS = ['Glúten', 'Lactose', 'Açúcar', 'Frutos do mar', 'Vegetariano', 'Vegano', 'Halal', 'Kosher'];
+const DEFAULT_MEALS = ['Café da Manhã', 'Lanche da Manhã', 'Almoço', 'Lanche da Tarde', 'Jantar', 'Ceia'];
+const MEAL_TIMES = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
 
 const generateId = () => Math.random().toString(36).substring(2, 15);
 
@@ -57,12 +65,11 @@ const initialFormState = {
     notes: '',
     meals: [
         { id: generateId(), nome: 'Café da Manhã', horario: '07:00', foods: [] as Food[] },
-        { id: generateId(), nome: 'Almoço',        horario: '12:30', foods: [] as Food[] },
-        { id: generateId(), nome: 'Jantar',        horario: '19:00', foods: [] as Food[] },
+        { id: generateId(), nome: 'Almoço', horario: '12:30', foods: [] as Food[] },
+        { id: generateId(), nome: 'Jantar', horario: '19:00', foods: [] as Food[] },
     ] as Meal[],
 };
 
-// Classes reutilizáveis
 const inputClass = "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30";
 const labelClass = "mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-foreground";
 
@@ -95,6 +102,16 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
         setShowFormModal(true);
     };
 
+
+    const handleDuplicate = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (confirm('Deseja duplicar este plano? Uma cópia será criada como inativa.')) {
+            router.post(`${baseUrl}/planos/${id}/duplicate`, {}, {
+                onSuccess: () => window.location.reload(),
+            });
+        }
+    };
+
     const handleOpenEdit = (plan: MealPlan, e: React.MouseEvent) => {
         e.stopPropagation();
         setEditingPlan(plan);
@@ -114,7 +131,14 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
                 horario: m.time,
                 name: m.name,
                 time: m.time,
-                foods: m.foods.map((f) => ({ id: f.id || generateId(), name: f.name, portion: f.portion, calories: f.calories })),
+                foods: m.foods.map((f) => ({
+                    id: f.id || generateId(),
+                    name: f.name,
+                    portion: f.portion,
+                    calories: f.calories,
+                    quantity: f.quantity ?? 100,
+                    per100g: f.per100g,
+                })),
             })),
         });
         setErrors({});
@@ -143,8 +167,14 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
             observacoes: formData.notes,
             status: formData.status,
             meals: formData.meals.map((m, index) => ({
-                nome: m.nome, horario: m.horario, ordem: index,
-                alimentos: m.foods.map((f) => ({ nome: f.name, porcao: f.portion, calorias: f.calories })),
+                nome: m.nome,
+                horario: m.horario,
+                ordem: index,
+                alimentos: m.foods.map((f) => ({
+                    nome: f.name,
+                    porcao: f.portion || `${f.quantity ?? 100}g`,
+                    calorias: f.calories,
+                })),
             })),
         };
         if (editingPlan) {
@@ -152,6 +182,38 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
         } else {
             router.post(`${baseUrl}/planos`, data, { onSuccess: () => window.location.reload() });
         }
+    };
+
+    const handleQuantityChange = (
+        mealId: string,
+        foodId: string,
+        quantity: number
+    ) => {
+        setFormData((prev) => ({
+            ...prev,
+            meals: prev.meals.map((meal) => {
+                if (meal.id !== mealId) return meal;
+
+                return {
+                    ...meal,
+                    foods: meal.foods.map((food) => {
+                        if (food.id !== foodId) return food;
+
+                        if (!food.per100g) {
+                            return { ...food, quantity };
+                        }
+
+                        const ratio = quantity / 100;
+
+                        return {
+                            ...food,
+                            quantity,
+                            calories: Math.round(food.per100g.calorias * ratio),
+                        };
+                    }),
+                };
+            }),
+        }));
     };
 
     const handleDelete = (id: string, e: React.MouseEvent) => {
@@ -164,10 +226,21 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
     const handleAddMeal = () => setFormData({ ...formData, meals: [...formData.meals, { id: generateId(), nome: '', horario: '12:00', name: '', time: '12:00', foods: [] }] });
     const handleRemoveMeal = (mealId: string) => { if (formData.meals.length <= 1) return; setFormData({ ...formData, meals: formData.meals.filter((m) => m.id !== mealId) }); };
     const handleUpdateMeal = (mealId: string, field: 'nome' | 'horario', value: string) => setFormData({ ...formData, meals: formData.meals.map((m) => m.id === mealId ? { ...m, [field]: value } : m) });
-    const handleAddFood = (mealId: string) => setFormData({ ...formData, meals: formData.meals.map((m) => m.id === mealId ? { ...m, foods: [...m.foods, { id: generateId(), name: '', portion: '', calories: 0 }] } : m) });
+    const handleAddFood = (mealId: string) => setFormData({ ...formData, meals: formData.meals.map((m) => m.id === mealId ? { ...m, foods: [...m.foods, { id: generateId(), name: '', portion: '', calories: 0, quantity: 100, per100g: undefined }] } : m) });
     const handleUpdateFood = (mealId: string, foodId: string, field: keyof Food, value: string | number) => setFormData({ ...formData, meals: formData.meals.map((m) => m.id === mealId ? { ...m, foods: m.foods.map((f) => f.id === foodId ? { ...f, [field]: value } : f) } : m) });
     const handleRemoveFood = (mealId: string, foodId: string) => setFormData({ ...formData, meals: formData.meals.map((m) => m.id === mealId ? { ...m, foods: m.foods.filter((f) => f.id !== foodId) } : m) });
     const toggleRestriction = (restriction: string) => setFormData({ ...formData, restrictions: formData.restrictions.includes(restriction) ? formData.restrictions.filter((r) => r !== restriction) : [...formData.restrictions, restriction] });
+
+    const handleUpdateFoodBatch = (mealId: string, foodId: string, updates: Partial<Food>) => {
+        setFormData((prev) => ({
+            ...prev,
+            meals: prev.meals.map((m) =>
+                m.id === mealId
+                    ? { ...m, foods: m.foods.map((f) => f.id === foodId ? { ...f, ...updates } : f) }
+                    : m,
+            ),
+        }));
+    };
 
     return (
         <div className="space-y-6">
@@ -195,11 +268,7 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
                                         <p className="text-sm text-muted-foreground">{plan.patientName}</p>
                                     </div>
                                 </div>
-                                <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                                    plan.status === 'ativo'
-                                        ? 'bg-primary/10 text-primary'
-                                        : 'bg-muted text-muted-foreground'
-                                }`}>
+                                <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${plan.status === 'ativo' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
                                     {plan.status}
                                 </span>
                             </div>
@@ -225,6 +294,13 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
                                     className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground transition hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
                                 >
                                     <Edit2 className="h-3.5 w-3.5" /> Editar
+                                </button>
+                                <button
+                                    onClick={(e) => handleDuplicate(plan.id, e)}
+                                    className="rounded-md p-2 text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+                                    title="Duplicar plano"
+                                >
+                                    <Copy className="h-4 w-4" />
                                 </button>
                                 <button
                                     onClick={(e) => handleDelete(plan.id, e)}
@@ -253,7 +329,6 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
                     <div className="max-h-[95vh] w-full max-w-4xl overflow-y-auto rounded-xl border border-border bg-card text-card-foreground shadow-xl">
 
-                        {/* Header sticky */}
                         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-6 py-5">
                             <div>
                                 <h2 className="text-lg font-semibold text-foreground">
@@ -269,7 +344,6 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
                         </div>
 
                         <div className="space-y-6 p-6">
-                            {/* Paciente + Nome do Plano */}
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div>
                                     <label className={labelClass}>Paciente *</label>
@@ -316,20 +390,18 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
                                     </select>
                                 </div>
 
-                                {/* Restrições */}
                                 <div className="md:col-span-2">
                                     <label className={labelClass}>Restrições</label>
-                                    <div className="flex flex-wrap gap-2 mt-1">
+                                    <div className="mt-1 flex flex-wrap gap-2">
                                         {RESTRICTIONS.map((restriction) => (
                                             <button
                                                 key={restriction}
                                                 type="button"
                                                 onClick={() => toggleRestriction(restriction)}
-                                                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
-                                                    formData.restrictions.includes(restriction)
+                                                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${formData.restrictions.includes(restriction)
                                                         ? 'border-primary bg-primary/10 text-primary'
                                                         : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground'
-                                                }`}
+                                                    }`}
                                             >
                                                 {restriction}
                                             </button>
@@ -354,7 +426,6 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
                                 <div className="space-y-4">
                                     {formData.meals.map((meal) => (
                                         <div key={meal.id} className="rounded-lg border border-border bg-muted/30 p-4">
-                                            {/* Cabeçalho da refeição */}
                                             <div className="mb-4 flex items-center gap-3">
                                                 <div className="flex-1">
                                                     <select
@@ -379,45 +450,117 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
                                                     <button
                                                         type="button"
                                                         onClick={() => handleRemoveMeal(meal.id)}
-                                                        className="rounded-md p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition"
+                                                        className="rounded-md p-2 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </button>
                                                 )}
                                             </div>
 
-                                            {/* Alimentos */}
                                             <div className="space-y-2">
                                                 {meal.foods.map((food) => (
-                                                    <div key={food.id} className="flex items-center gap-2 rounded-md border border-border bg-background p-2">
-                                                        <input
-                                                            type="text"
-                                                            value={food.name}
-                                                            onChange={(e) => handleUpdateFood(meal.id, food.id, 'name', e.target.value)}
-                                                            className="flex-1 rounded border-0 bg-transparent px-2 py-1 text-sm text-foreground placeholder:text-muted-foreground outline-none"
-                                                            placeholder="Alimento"
-                                                        />
-                                                        <input
-                                                            type="text"
-                                                            value={food.portion}
-                                                            onChange={(e) => handleUpdateFood(meal.id, food.id, 'portion', e.target.value)}
-                                                            className="w-28 rounded border-0 bg-transparent px-2 py-1 text-sm text-foreground placeholder:text-muted-foreground outline-none"
-                                                            placeholder="Porção"
-                                                        />
-                                                        <input
-                                                            type="number"
-                                                            value={food.calories}
-                                                            onChange={(e) => handleUpdateFood(meal.id, food.id, 'calories', Number(e.target.value))}
-                                                            className="w-20 rounded border-0 bg-transparent px-2 py-1 text-sm text-foreground placeholder:text-muted-foreground outline-none"
-                                                            placeholder="kcal"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleRemoveFood(meal.id, food.id)}
-                                                            className="p-1 text-muted-foreground hover:text-destructive transition"
-                                                        >
-                                                            <X className="h-4 w-4" />
-                                                        </button>
+                                                    <div key={food.id} className="rounded-md border border-border bg-background">
+                                                        {/* Linha 1: busca + remover */}
+                                                        <div className="flex items-center gap-2 px-2 pt-2">
+                                                            <FoodSearch
+                                                                value={food.name}
+                                                                portion={food.portion}
+                                                                calories={food.calories}
+                                                                onChange={(name, portion, calories, per100g) =>
+                                                                    handleUpdateFoodBatch(meal.id, food.id, {
+                                                                        name,
+                                                                        portion,
+                                                                        calories,
+                                                                        per100g,
+                                                                        quantity: 100,
+                                                                    })
+                                                                }
+                                                                onClear={() =>
+                                                                    handleUpdateFoodBatch(meal.id, food.id, {
+                                                                        name: '',
+                                                                        portion: '',
+                                                                        calories: 0,
+                                                                        quantity: 100,
+                                                                        per100g: undefined,
+                                                                    })
+                                                                }
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleRemoveFood(meal.id, food.id)}
+                                                                className="flex-shrink-0 p-1 text-muted-foreground transition hover:text-destructive"
+                                                            >
+                                                                <X className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Linha 2: quantidade + porção + kcal */}
+                                                        <div className="flex items-center gap-2 px-2 pb-2 pt-1">
+                                                            <div className="flex items-center gap-1 rounded border border-border bg-muted/30 px-2 py-1">
+                                                                <span className="text-xs text-muted-foreground">Qtd</span>
+                                                                <input
+                                                                    type="number"
+                                                                    min={1}
+                                                                    value={food.quantity ?? 100}
+                                                                    onChange={(e) => handleQuantityChange(meal.id, food.id, Number(e.target.value))}
+                                                                    className="w-14 bg-transparent text-center text-sm text-foreground outline-none"
+                                                                />
+                                                                <span className="text-xs text-muted-foreground">g</span>
+                                                            </div>
+
+                                                            <input
+                                                                type="text"
+                                                                value={food.portion}
+                                                                onChange={(e) => {
+                                                                    const newPortion = e.target.value;
+                                                                    const match = newPortion.match(/(\d+)\s*g/i);
+                                                                    const newGrams = match ? Number(match[1]) : food.quantity ?? 100;
+                                                                    const newCalories = food.per100g
+                                                                        ? Math.round(food.per100g.calorias * newGrams / 100)
+                                                                        : food.calories;
+
+                                                                    handleUpdateFoodBatch(meal.id, food.id, {
+                                                                        portion: newPortion,
+                                                                        quantity: newGrams,
+                                                                        calories: newCalories,
+                                                                    });
+                                                                }}
+                                                                className="flex-1 rounded border border-border bg-muted/30 px-2 py-1 text-sm text-foreground placeholder:text-muted-foreground outline-none"
+                                                                placeholder="Porção (ex: 1 fatia)"
+                                                            />
+
+                                                            <div className="flex items-center gap-1 rounded border border-border bg-muted/30 px-2 py-1">
+                                                                <input
+                                                                    type="number"
+                                                                    value={food.calories || ''}
+                                                                    onChange={(e) => handleUpdateFood(meal.id, food.id, 'calories', Number(e.target.value))}
+                                                                    className="w-14 bg-transparent text-center text-sm text-foreground outline-none"
+                                                                    placeholder="0"
+                                                                />
+                                                                <span className="text-xs text-muted-foreground">kcal</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Linha 3: macros — só se tiver per100g */}
+                                                        {food.per100g && (
+                                                            <div className="flex items-center gap-3 border-t border-border/50 px-3 py-1.5">
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    P: <span className="font-medium text-foreground">
+                                                                        {((food.per100g.proteinas * (food.quantity ?? 100)) / 100).toFixed(1)}g
+                                                                    </span>
+                                                                </span>
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    C: <span className="font-medium text-foreground">
+                                                                        {((food.per100g.carboidratos * (food.quantity ?? 100)) / 100).toFixed(1)}g
+                                                                    </span>
+                                                                </span>
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    G: <span className="font-medium text-foreground">
+                                                                        {((food.per100g.gorduras * (food.quantity ?? 100)) / 100).toFixed(1)}g
+                                                                    </span>
+                                                                </span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
@@ -435,7 +578,6 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
                             </div>
                         </div>
 
-                        {/* Footer sticky */}
                         <div className="sticky bottom-0 flex gap-3 border-t border-border bg-card px-6 py-5">
                             <button
                                 onClick={() => setShowFormModal(false)}
@@ -482,7 +624,6 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
                         </div>
 
                         <div className="p-6">
-                            {/* Badges de info */}
                             <div className="mb-6 flex flex-wrap items-center gap-2">
                                 <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
                                     <Check className="h-3.5 w-3.5" /> {selectedPlan.objective}

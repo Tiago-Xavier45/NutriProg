@@ -10,6 +10,7 @@ use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
+use App\Http\Controllers\TacoAlimentoController;
 
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
@@ -19,6 +20,12 @@ Route::prefix('{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])
     ->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('taco/buscar', [TacoAlimentoController::class, 'buscar'])->name('taco.buscar');
+
+        Route::post('planos/{plano_id}/duplicate', [PlanoAlimentarController::class, 'duplicate'])
+        ->name('planos.duplicate')
+        ->withoutMiddleware(SubstituteBindings::class);
 
         Route::get('clientes', [ClienteController::class, 'index'])->name('cliente.index');
         Route::post('clientes', [ClienteController::class, 'store'])->name('clientes.store');
