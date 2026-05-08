@@ -79,6 +79,48 @@ class PlanoAlimentarController extends Controller
         ]);
     }
 
+    public function duplicate(Request $request): RedirectResponse
+{
+    $team = $request->user()->currentTeam;
+    $planoId = $request->route('plano_id') ?? $request->route('plano');
+
+    $original = PlanoAlimentar::with(['refeicoes.alimentos'])
+        ->whereHas('cliente', fn ($builder) => $builder->forTeam($team))
+        ->findOrFail((int) $planoId);
+
+    // Cria o plano duplicado
+    $novo = PlanoAlimentar::create([
+        'cliente_id'  => $original->cliente_id,
+        'nome'        => $original->nome . ' (cópia)',
+        'calorias'    => $original->calorias,
+        'objetivo'    => $original->objetivo,
+        'restricoes'  => $original->restricoes,
+        'observacoes' => $original->observacoes,
+        'status'      => 'inativo', // começa inativo para revisão
+    ]);
+
+    // Duplica refeições e alimentos
+    foreach ($original->refeicoes as $refeicao) {
+        $novaRefeicao = Refeicao::create([
+            'plano_alimentar_id' => $novo->id,
+            'nome'               => $refeicao->nome,
+            'horario'            => $refeicao->horario,
+            'ordem'              => $refeicao->ordem,
+        ]);
+
+        foreach ($refeicao->alimentos as $alimento) {
+            Alimento::create([
+                'refeicao_id' => $novaRefeicao->id,
+                'nome'        => $alimento->nome,
+                'porcao'      => $alimento->porcao,
+                'calorias'    => $alimento->calorias,
+            ]);
+        }
+    }
+
+    return redirect()->back()->with('success', 'Plano duplicado com sucesso!');
+}
+
     public function store(Request $request): RedirectResponse
     {
         $team = $request->user()->currentTeam;
