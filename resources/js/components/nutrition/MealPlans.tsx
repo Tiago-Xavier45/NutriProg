@@ -495,15 +495,15 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
                                                         </div>
 
                                                         {/* Linha 2: quantidade + porção + kcal */}
-                                                        <div className="flex items-center gap-2 px-2 pb-2 pt-1">
-                                                            <div className="flex items-center gap-1 rounded border border-border bg-muted/30 px-2 py-1">
-                                                                <span className="text-xs text-muted-foreground">Qtd</span>
+                                                        <div className="flex items-center gap-2 px-2 pb-2 pt-1 min-w-0">
+                                                            <div className="flex items-center gap-1 rounded border border-border bg-muted/30 px-2 py-1 shrink-0">
+                                                               <span className="text-xs text-muted-foreground">Qtd</span>
                                                                 <input
                                                                     type="number"
                                                                     min={1}
                                                                     value={food.quantity ?? 100}
                                                                     onChange={(e) => handleQuantityChange(meal.id, food.id, Number(e.target.value))}
-                                                                    className="w-14 bg-transparent text-center text-sm text-foreground outline-none"
+                                                                    className="w-14 bg-transparent text-center text-sm text-foreground outline-none   "
                                                                 />
                                                                 <span className="text-xs text-muted-foreground">g</span>
                                                             </div>
@@ -529,7 +529,7 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
                                                                 placeholder="Porção (ex: 1 fatia)"
                                                             />
 
-                                                            <div className="flex items-center gap-1 rounded border border-border bg-muted/30 px-2 py-1">
+                                                            <div className="flex items-center gap-1 rounded border border-border bg-muted/30 px-2 py-1 shrink-0">
                                                                 <input
                                                                     type="number"
                                                                     value={food.calories || ''}
@@ -543,7 +543,7 @@ export function MealPlans({ initialPlans = [], pacientes = [] }: MealPlansProps)
 
                                                         {/* Linha 3: macros — só se tiver per100g */}
                                                         {food.per100g && (
-                                                            <div className="flex items-center gap-3 border-t border-border/50 px-3 py-1.5">
+                                                            <div className="flex items-center gap-3 px-2 pb-2 pt-1">
                                                                 <span className="text-xs text-muted-foreground">
                                                                     P: <span className="font-medium text-foreground">
                                                                         {((food.per100g.proteinas * (food.quantity ?? 100)) / 100).toFixed(1)}g

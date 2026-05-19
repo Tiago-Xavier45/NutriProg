@@ -287,22 +287,22 @@ export function Agenda({ initialAppointments = [], initialMonth, initialYear, pa
 
             const isPast = currentDayDate < todayDate;
 
-            // 🎨 Estilos base
+            //  Estilos base
             let bgClass = 'bg-card hover:bg-muted';
             let dotClass = '';
             let countClass = 'text-muted-foreground';
             let opacityClass = '';
 
-            // 🚫 Dias passados
+            //  Dias passados
             if (isPast) {
                 bgClass = 'bg-muted/50';
                 opacityClass = 'opacity-50';
             }
-            // 🚫 Domingo
+            //  Domingo
             else if (isSunday) {
                 bgClass = 'bg-muted/50';
             }
-            // 📅 Dias com dados
+            //  Dias com dados
             else if (dayData) {
                 const active = dayData.appointments.filter(
                     (a) => a.status !== 'cancelado'

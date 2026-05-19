@@ -106,7 +106,7 @@ export function FoodSearch({
         }, 300);
     };
 
-    // ✅ extrai gramas da string da porção
+    // extrai gramas da string da porção
     const extractGrams = (portion: string): number => {
         const match = portion.match(/(\d+)\s*g/i);
 
@@ -138,7 +138,6 @@ export function FoodSearch({
                 carboidratos: food.carboidratos,
                 gorduras: food.gorduras,
             },
-            grams
         );
     };
 
