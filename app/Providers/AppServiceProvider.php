@@ -65,12 +65,15 @@ class AppServiceProvider extends ServiceProvider
 
     private function configurePasswords(): void
     {
-        Password::defaults(function () {
-            return Password::min(12)
-                ->mixedCase()
-                ->numbers()
-                ->symbols()
-                ->uncompromised();
-        });
+        // if (app()->isProduction()){
+            Password::defaults(function () {
+                return Password::min(12)
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols()
+                    ->uncompromised();
+            });
+        // }
+
     }
 }
