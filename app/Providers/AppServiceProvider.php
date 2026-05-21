@@ -65,7 +65,7 @@ class AppServiceProvider extends ServiceProvider
 
     private function configurePasswords(): void
     {
-        // if (app()->isProduction()){
+        if (app()->isProduction()){
             Password::defaults(function () {
                 return Password::min(12)
                     ->mixedCase()
@@ -73,7 +73,7 @@ class AppServiceProvider extends ServiceProvider
                     ->symbols()
                     ->uncompromised();
             });
-        // }
+        }
 
     }
 }
