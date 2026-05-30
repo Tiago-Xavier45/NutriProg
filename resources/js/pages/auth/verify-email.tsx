@@ -1,10 +1,6 @@
-// Components
-import { Form, Head } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { logout } from '@/routes';
-import { send } from '@/routes/verification';
 
 export default function VerifyEmail({ status }: { status?: string }) {
     return (
@@ -13,34 +9,27 @@ export default function VerifyEmail({ status }: { status?: string }) {
 
             {status === 'Link de verificação enviado' && (
                 <div className="mb-4 text-center text-sm font-medium text-green-600">
-                   Um novo link de verificação foi enviado para o endereço de e-mail
-que você forneceu durante o cadastro.
+                    Um novo link de verificação foi enviado para o endereço de e-mail
+                    que você forneceu durante o cadastro.
                 </div>
             )}
 
-            <Form {...send.form()} className="space-y-6 text-center">
-                {({ processing }) => (
-                    <>
-                        <Button disabled={processing} variant="secondary">
-                            {processing && <Spinner />}
-                            Reenviar e-mail de verificação
-                        </Button>
-
-                        <TextLink
-                            href={logout()}
-                            className="mx-auto block text-sm"
-                        >
-                           Sair
-                        </TextLink>
-                    </>
-                )}
-            </Form>
+            <div className="space-y-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                    A verificação de e-mail está temporariamente desativada.
+                </p>
+                <TextLink
+                    href={logout()}
+                    className="mx-auto block text-sm"
+                >
+                    Sair
+                </TextLink>
+            </div>
         </>
     );
 }
 
 VerifyEmail.layout = {
     title: 'Verificar e-mail',
-    description:
-        'Por favor, verifique seu endereço de e-mail clicando no link que acabamos de enviar para você.',
+    description: 'Por favor, verifique seu endereço de e-mail.',
 };
