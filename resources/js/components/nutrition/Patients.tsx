@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Phone, Mail, Calendar, X } from 'lucide-react';
 import { usePage, router } from '@inertiajs/react';
 import { PageHeader, ContentCard } from '@/components/ui';
+import { Link } from '@inertiajs/react';
+import { Activity } from 'lucide-react';
+import { FileText, FlaskConical } from 'lucide-react';
 
 const formatHeightForDisplay = (height: string | number): string => {
     if (!height) return '';
@@ -134,6 +137,7 @@ export function Patients({
                                 ))}
                             </tr>
                         </thead>
+                        
                         <tbody className="divide-y divide-border">
                             {filteredPatients.map((patient) => (
                                 <tr key={patient.id} className="transition-colors hover:bg-muted/30">
@@ -157,29 +161,68 @@ export function Patients({
                                     <td className="px-6 py-4 text-sm text-muted-foreground">{patient.weight} / {patient.height}</td>
                                     <td className="px-6 py-4 text-sm text-muted-foreground">{patient.plan}</td>
                                     <td className="px-6 py-4">
-                                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                                            patient.status === 'Ativo'
+                                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${patient.status === 'Ativo'
                                                 ? 'bg-primary/10 text-primary'
                                                 : patient.status === 'Pendente'
-                                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                                : 'bg-muted text-muted-foreground'
-                                        }`}>
+                                                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                                    : 'bg-muted text-muted-foreground'
+                                            }`}>
                                             {patient.status}
                                         </span>
                                     </td>
+
+                                      {/* última visita */}
                                     <td className="px-6 py-4 text-sm text-muted-foreground">
                                         <div className="flex items-center gap-1.5">
                                             <Calendar className="h-3.5 w-3.5" />{patient.lastVisit}
                                         </div>
                                     </td>
+
+                                    {/*  Ações dos pacientes (anamnese, exames, avaliações, editar, excluir)*/}
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-1">
-                                            <button onClick={() => handleOpenModal(patient)} className="rounded-md p-2 text-muted-foreground transition hover:bg-primary/10 hover:text-primary">
+
+                                            <Link
+                                                href={`${baseUrl}/clientes/${patient.id}/anamnese`}
+                                                className="rounded-md p-2 text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+                                                title="Anamnese"
+                                            >
+                                                <FileText className="h-4 w-4" />
+                                            </Link>
+
+                                            <Link
+                                                href={`${baseUrl}/clientes/${patient.id}/exames`}
+                                                className="rounded-md p-2 text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+                                                title="Exames"
+                                            >
+                                                <FlaskConical className="h-4 w-4" />
+                                            </Link>
+
+
+
+
+                                            <Link
+                                                href={`${baseUrl}/clientes/${patient.id}/avaliacoes`}
+                                                className="rounded-md p-2 text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+                                                title="Avaliações"
+                                            >
+                                                <Activity className="h-4 w-4" />
+                                            </Link>
+
+                                            <button
+                                                onClick={() => handleOpenModal(patient)}
+                                                className="rounded-md p-2 text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+                                            >
                                                 <Edit2 className="h-4 w-4" />
                                             </button>
-                                            <button onClick={() => handleDelete(patient.id)} className="rounded-md p-2 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive">
+
+                                            <button
+                                                onClick={() => handleDelete(patient.id)}
+                                                className="rounded-md p-2 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+                                            >
                                                 <Trash2 className="h-4 w-4" />
                                             </button>
+
                                         </div>
                                     </td>
                                 </tr>

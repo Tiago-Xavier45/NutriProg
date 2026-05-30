@@ -11,6 +11,10 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use App\Http\Controllers\TacoAlimentoController;
+use App\Http\Controllers\AvaliacaoAntropometricaController;
+use App\Http\Controllers\AnamneseController;
+use App\Http\Controllers\ExameLaboratorialController;
+
 
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
@@ -26,6 +30,39 @@ Route::prefix('{current_team}')
         Route::post('planos/{plano_id}/duplicate', [PlanoAlimentarController::class, 'duplicate'])
         ->name('planos.duplicate')
         ->withoutMiddleware(SubstituteBindings::class);
+
+        // Anamnese
+Route::get('clientes/{cliente_id}/anamnese', [AnamneseController::class, 'show'])
+    ->name('anamnese.show')
+    ->withoutMiddleware(SubstituteBindings::class);
+
+Route::post('clientes/{cliente_id}/anamnese', [AnamneseController::class, 'store'])
+    ->name('anamnese.store')
+    ->withoutMiddleware(SubstituteBindings::class);
+
+// Exames
+Route::get('clientes/{cliente_id}/exames', [ExameLaboratorialController::class, 'index'])
+    ->name('exames.index')
+    ->withoutMiddleware(SubstituteBindings::class);
+
+Route::post('clientes/{cliente_id}/exames', [ExameLaboratorialController::class, 'store'])
+    ->name('exames.store')
+    ->withoutMiddleware(SubstituteBindings::class);
+
+Route::delete('clientes/{cliente_id}/exames/{exame_id}', [ExameLaboratorialController::class, 'destroy'])
+    ->name('exames.destroy')
+    ->withoutMiddleware(SubstituteBindings::class);
+        Route::get('clientes/{cliente_id}/avaliacoes', [AvaliacaoAntropometricaController::class, 'index'])
+    ->name('avaliacoes.index')
+    ->withoutMiddleware(SubstituteBindings::class);
+
+Route::post('clientes/{cliente_id}/avaliacoes', [AvaliacaoAntropometricaController::class, 'store'])
+    ->name('avaliacoes.store')
+    ->withoutMiddleware(SubstituteBindings::class);
+
+Route::delete('clientes/{cliente_id}/avaliacoes/{avaliacao_id}', [AvaliacaoAntropometricaController::class, 'destroy'])
+    ->name('avaliacoes.destroy')
+    ->withoutMiddleware(SubstituteBindings::class);
 
         Route::get('clientes', [ClienteController::class, 'index'])->name('cliente.index');
         Route::post('clientes', [ClienteController::class, 'store'])->name('clientes.store');
