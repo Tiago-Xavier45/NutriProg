@@ -21,7 +21,7 @@ Route::inertia('/', 'welcome', [
 ])->name('home');
 
 Route::prefix('{current_team}')
-    ->middleware(['auth', 'verified', EnsureTeamMembership::class])
+  
     ->group(function () {
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
