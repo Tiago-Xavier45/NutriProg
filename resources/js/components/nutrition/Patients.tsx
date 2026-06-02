@@ -5,6 +5,7 @@ import { PageHeader, ContentCard } from '@/components/ui';
 import { Link } from '@inertiajs/react';
 import { Activity } from 'lucide-react';
 import { FileText, FlaskConical } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const formatHeightForDisplay = (height: string | number): string => {
     if (!height) return '';
@@ -107,7 +108,6 @@ export function Patients({
         }
     };
 
-    // Classes reutilizáveis
     const inputClass = "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/30";
     const labelClass = "mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-foreground";
 
@@ -137,7 +137,7 @@ export function Patients({
                                 ))}
                             </tr>
                         </thead>
-                        
+
                         <tbody className="divide-y divide-border">
                             {filteredPatients.map((patient) => (
                                 <tr key={patient.id} className="transition-colors hover:bg-muted/30">
@@ -161,75 +161,96 @@ export function Patients({
                                     <td className="px-6 py-4 text-sm text-muted-foreground">{patient.weight} / {patient.height}</td>
                                     <td className="px-6 py-4 text-sm text-muted-foreground">{patient.plan}</td>
                                     <td className="px-6 py-4">
-                                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${patient.status === 'Ativo'
+                                        <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                                            patient.status === 'Ativo'
                                                 ? 'bg-primary/10 text-primary'
                                                 : patient.status === 'Pendente'
-                                                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                                    : 'bg-muted text-muted-foreground'
-                                            }`}>
+                                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                                : 'bg-muted text-muted-foreground'
+                                        }`}>
                                             {patient.status}
                                         </span>
                                     </td>
-
-                                      {/* última visita */}
                                     <td className="px-6 py-4 text-sm text-muted-foreground">
                                         <div className="flex items-center gap-1.5">
                                             <Calendar className="h-3.5 w-3.5" />{patient.lastVisit}
                                         </div>
                                     </td>
 
-                                    {/*  Ações dos pacientes (anamnese, exames, avaliações, editar, excluir)*/}
+                                    {/*  Ações de paciente */}
                                     <td className="px-6 py-4">
-                                        <div className="flex items-center gap-1">
+                                        <TooltipProvider delayDuration={300}>
+                                            <div className="flex items-center gap-1">
 
-                                            <Link
-                                                href={`${baseUrl}/clientes/${patient.id}/anamnese`}
-                                                className="rounded-md p-2 text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
-                                                title="Anamnese"
-                                            >
-                                                <FileText className="h-4 w-4" />
-                                            </Link>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Link
+                                                            href={`${baseUrl}/clientes/${patient.id}/anamnese`}
+                                                            className="rounded-md p-2 text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+                                                        >
+                                                            <FileText className="h-4 w-4" />
+                                                        </Link>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="top">Anamnese</TooltipContent>
+                                                </Tooltip>
 
-                                            <Link
-                                                href={`${baseUrl}/clientes/${patient.id}/exames`}
-                                                className="rounded-md p-2 text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
-                                                title="Exames"
-                                            >
-                                                <FlaskConical className="h-4 w-4" />
-                                            </Link>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Link
+                                                            href={`${baseUrl}/clientes/${patient.id}/exames`}
+                                                            className="rounded-md p-2 text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+                                                        >
+                                                            <FlaskConical className="h-4 w-4" />
+                                                        </Link>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="top">Exames Laboratoriais</TooltipContent>
+                                                </Tooltip>
 
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Link
+                                                            href={`${baseUrl}/clientes/${patient.id}/avaliacoes`}
+                                                            className="rounded-md p-2 text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+                                                        >
+                                                            <Activity className="h-4 w-4" />
+                                                        </Link>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="top">Avaliações Antropométricas</TooltipContent>
+                                                </Tooltip>
 
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <button
+                                                            onClick={() => handleOpenModal(patient)}
+                                                            className="rounded-md p-2 text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
+                                                        >
+                                                            <Edit2 className="h-4 w-4" />
+                                                        </button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="top">Editar Paciente</TooltipContent>
+                                                </Tooltip>
 
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <button
+                                                            onClick={() => handleDelete(patient.id)}
+                                                            className="rounded-md p-2 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="top">Excluir Paciente</TooltipContent>
+                                                </Tooltip>
 
-                                            <Link
-                                                href={`${baseUrl}/clientes/${patient.id}/avaliacoes`}
-                                                className="rounded-md p-2 text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
-                                                title="Avaliações"
-                                            >
-                                                <Activity className="h-4 w-4" />
-                                            </Link>
-
-                                            <button
-                                                onClick={() => handleOpenModal(patient)}
-                                                className="rounded-md p-2 text-muted-foreground transition hover:bg-primary/10 hover:text-primary"
-                                            >
-                                                <Edit2 className="h-4 w-4" />
-                                            </button>
-
-                                            <button
-                                                onClick={() => handleDelete(patient.id)}
-                                                className="rounded-md p-2 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </button>
-
-                                        </div>
+                                            </div>
+                                        </TooltipProvider>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
+
                 {filteredPatients.length === 0 && (
                     <div className="p-8 text-center text-sm text-muted-foreground">
                         Nenhum paciente encontrado
@@ -237,30 +258,23 @@ export function Patients({
                 )}
             </ContentCard>
 
-            {/* Modal — agora com tokens do tema */}
+            {/* Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
                     <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-card text-card-foreground shadow-xl">
 
-                        {/* Header */}
                         <div className="flex items-center justify-between border-b border-border px-6 py-5">
                             <div>
                                 <h2 className="text-lg font-semibold text-foreground">
                                     {editingPatient ? 'Editar Paciente' : 'Novo Paciente'}
                                 </h2>
-                                <p className="mt-0.5 text-xs text-muted-foreground">
-                                    Preencha os dados do paciente
-                                </p>
+                                <p className="mt-0.5 text-xs text-muted-foreground">Preencha os dados do paciente</p>
                             </div>
-                            <button
-                                onClick={() => setShowModal(false)}
-                                className="rounded-md p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                            >
+                            <button onClick={() => setShowModal(false)} className="rounded-md p-1.5 text-muted-foreground transition hover:bg-muted hover:text-foreground">
                                 <X className="h-5 w-5" />
                             </button>
                         </div>
 
-                        {/* Body */}
                         <div className="space-y-5 p-6">
                             <div>
                                 <label className={labelClass}>Nome</label>
@@ -296,8 +310,7 @@ export function Patients({
                                     <div className="relative">
                                         <input type="text" value={formData.weight}
                                             onChange={(e) => setFormData({ ...formData, weight: e.target.value.replace(/kg$/i, '').trim() })}
-                                            placeholder="75,5"
-                                            className={`${inputClass} pr-9`} />
+                                            placeholder="75,5" className={`${inputClass} pr-9`} />
                                         <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">kg</span>
                                     </div>
                                 </div>
@@ -339,7 +352,6 @@ export function Patients({
                             </div>
                         </div>
 
-                        {/* Footer */}
                         <div className="flex gap-3 border-t border-border px-6 py-5">
                             <button onClick={() => setShowModal(false)}
                                 className="flex-1 rounded-md border border-border bg-transparent px-4 py-2 text-sm text-foreground transition hover:bg-muted">

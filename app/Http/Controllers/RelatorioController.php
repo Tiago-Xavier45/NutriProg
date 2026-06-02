@@ -128,7 +128,7 @@ class RelatorioController extends Controller
 
         for ($i = 5; $i >= 0; $i--) {
             $date = now()->subMonths($i);
-            $monthName = $date->format('M');
+           $monthName = $date->locale('pt_BR')->translatedFormat('M');
 
             $pacientes = Cliente::query()->forTeam($team)
                 ->whereYear('created_at', $date->year)
